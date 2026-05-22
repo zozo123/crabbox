@@ -76,6 +76,24 @@ func doctorPondSummary(ctx context.Context, cfg Config) (string, string, map[str
 	return "failed", fmt.Sprintf("pond %q: tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/pond.md", pond, tag), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "remedy": "see_docs_features_pond_md"}
 }
 
+// normalizeHuJSON strips HuJSON line comments and trailing commas from a
+// brace-balanced policy section so json.Unmarshal can parse it. Conservative:
+// only removes // comments (not /* */) and trailing commas before ] or }.
+func normalizeHuJSON(input string) string {
+	lines := strings.Split(input, "\n")
+	var out strings.Builder
+	for i, line := range lines {
+		if idx := strings.Index(line, "//"); idx >= 0 {
+			line = line[:idx]
+		}
+		out.WriteString(line)
+		if i < len(lines)-1 {
+			out.WriteByte('\n')
+		}
+	}
+	return strings.NewReplacer(",]", "]", ",}", "}").Replace(out.String())
+}
+
 // pondACLRowPresent checks for the concrete tag declaration and access row
 // needed by a pond. The Tailscale policy file is HuJSON and not trivially
 // JSON-parseable without an extra dependency, so keep the scan textual but
@@ -106,17 +124,14 @@ func pondACLRowPresent(policy, tag string) bool {
 }
 
 // pondACLSelfPeerRule scans the acls section (raw section text) for a rule
-// where the tag appears both in src and dst. Uses JSON unmarshal so the check
-// is structural rather than substring; section text is already brace-balanced
-// by policySection so plain json.Unmarshal works for spec-compliant policies.
-// HuJSON policies with comments will fail to parse here; the caller treats
-// that as "not present" and falls back to the manual snippet.
+// where the tag appears both in src and dst. HuJSON policies with comments
+// or trailing commas are normalized before parsing.
 func pondACLSelfPeerRule(section, tag string) bool {
 	var rules []struct {
 		Src []string `json:"src"`
 		Dst []string `json:"dst"`
 	}
-	if err := json.Unmarshal([]byte(section), &rules); err != nil {
+	if err := json.Unmarshal([]byte(normalizeHuJSON(section)), &rules); err != nil {
 		return false
 	}
 	for _, r := range rules {
@@ -150,7 +165,7 @@ func pondGrantSelfPeerRule(section, tag string) bool {
 		Dst []string `json:"dst"`
 		IP  []string `json:"ip"`
 	}
-	if err := json.Unmarshal([]byte(section), &rules); err != nil {
+	if err := json.Unmarshal([]byte(normalizeHuJSON(section)), &rules); err != nil {
 		return false
 	}
 	for _, r := range rules {

@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 // pondExposedPortsLabelKey is the reserved provider-label key that carries the
@@ -90,6 +91,19 @@ type pondMeshExecRunner struct{}
 
 func (pondMeshExecRunner) Command(ctx context.Context, name string, args ...string) pondMeshHandle {
 	return &pondMeshExecHandle{cmd: exec.CommandContext(ctx, name, args...)}
+}
+
+// pondMeshDaemonRunner creates SSH tunnel processes that survive the parent
+// CLI exit. It uses plain exec.Command (not CommandContext) so context
+// cancellation does not kill the tunnels, and sets Setpgid so the kernel
+// orphan-adopts them when crabbox exits. Used only by the --export path
+// so eval $(crabbox pond connect --export) works.
+type pondMeshDaemonRunner struct{}
+
+func (pondMeshDaemonRunner) Command(_ context.Context, name string, args ...string) pondMeshHandle {
+	cmd := exec.Command(name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	return &pondMeshExecHandle{cmd: cmd}
 }
 
 type pondMeshExecHandle struct {
@@ -304,13 +318,14 @@ func (a App) pondConnect(ctx context.Context, args []string) error {
 		for _, line := range summary.Exports {
 			fmt.Fprintln(a.Stdout, line)
 		}
-		// Launch tunnels in a background goroutine with context.Background()
-		// so they survive the parent exit and keep loopback endpoints live.
-		// The error goroutine inside cancels the background context when any
-		// tunnel dies, triggering graceful teardown. This lets eval $(...)
-		// consume env vars without blocking while tunnels stay alive.
+		// Use a daemon runner that creates non-context-bound SSH processes
+		// with Setpgid so they survive the parent exit. The tunnels are
+		// spawned in a background goroutine and return immediately so
+		// eval $(crabbox pond connect <name> --export) works.
+		daemonOpts := opts
+		daemonOpts.Runner = pondMeshDaemonRunner{}
+		go runPondMeshForwards(context.Background(), daemonOpts, members, summary)
 		fmt.Fprintf(a.Stderr, "pond %q SSH-mesh daemon started (%d forwards)\n", pond, len(summary.Forwards))
-		go runPondMeshForwards(context.Background(), opts, members, summary)
 		return nil
 	}
 	fmt.Fprintf(a.Stdout, "pond %q SSH-mesh ready (%d forwards)\n", pond, len(summary.Forwards))
