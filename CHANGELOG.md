@@ -48,6 +48,15 @@
   check and is explicit about the asymmetry — `tailnet -> url` works,
   `url -> tailnet` does not, and SSH pairs need operator-side bridging.
 
+- Added the **SSH-mesh plane** — `crabbox pond connect <name> [--export]` opens
+  operator-side `ssh -L` tunnels to every pond member that declared an
+  `--expose <port>` on warmup. Local ports are auto-allocated in
+  51820–52819; `--export` emits `eval`-able `CRABBOX_POND_<SLUG>_<PORT>`
+  environment variables for shell consumption. TCP-only, operator-side
+  only — no lease-to-lease mesh in v0. Useful for SSH-only providers
+  (RunPod, Proxmox, exe.dev, Daytona, Sprites, Namespace, Semaphore)
+  where neither Tailscale nor the Bridge plane applies.
+
 ## 0.17.0 - 2026-05-21
 
 ### Added

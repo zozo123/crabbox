@@ -465,9 +465,13 @@ type machineCleanupKongCmd struct {
 }
 
 type pondKongCmd struct {
-	Peers pondPeersKongCmd `cmd:"" passthrough:"" help:"List peer endpoints for a pond on a delegated provider."`
+	Peers   pondPeersKongCmd   `cmd:"" passthrough:"" help:"List peer endpoints for a pond on a delegated provider."`
+	Connect pondConnectKongCmd `cmd:"" passthrough:"" help:"Open SSH -L forwards to every pond member that declared --expose ports."`
 }
 type pondPeersKongCmd struct {
+	Args []string `arg:"" optional:""`
+}
+type pondConnectKongCmd struct {
 	Args []string `arg:"" optional:""`
 }
 
@@ -505,6 +509,9 @@ func (c *inspectKongCmd) Run(ctx context.Context, app App) error { return app.in
 func (c *stopKongCmd) Run(ctx context.Context, app App) error    { return app.stop(ctx, c.Args) }
 func (c *releaseKongCmd) Run(ctx context.Context, app App) error { return app.stop(ctx, c.Args) }
 func (c *cleanupKongCmd) Run(ctx context.Context, app App) error { return app.cleanup(ctx, c.Args) }
+func (c *pondConnectKongCmd) Run(ctx context.Context, app App) error {
+	return app.pondConnect(ctx, c.Args)
+}
 
 func (c *desktopLaunchKongCmd) Run(ctx context.Context, app App) error {
 	return app.desktopLaunch(ctx, c.Args)

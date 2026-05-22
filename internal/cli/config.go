@@ -24,6 +24,7 @@ type Config struct {
 	Network                  NetworkMode
 	Class                    string
 	Pond                     string
+	ExposedPorts             []string
 	ServerType               string
 	ServerTypeExplicit       bool
 	Coordinator              string

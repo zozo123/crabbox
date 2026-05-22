@@ -35,6 +35,9 @@ func directLeaseLabels(cfg Config, leaseID, slug, provider, market string, keep 
 	if pond := normalizePondName(cfg.Pond); pond != "" {
 		labels[pondLabelKey] = pond
 	}
+	if ports := renderExposedPortsLabel(cfg.ExposedPorts); ports != "" {
+		labels[pondExposedPortsLabelKey] = ports
+	}
 	if cfg.TargetOS == targetWindows {
 		labels["windows_mode"] = cfg.WindowsMode
 	}
