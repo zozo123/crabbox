@@ -304,11 +304,14 @@ func (a App) pondConnect(ctx context.Context, args []string) error {
 		for _, line := range summary.Exports {
 			fmt.Fprintln(a.Stdout, line)
 		}
-		// Fall through to run the tunnels. The earlier behaviour of returning
-		// here meant the advertised loopback endpoints had no SSH tunnel behind
-		// them (Codex P1, pond_mesh.go:307). Now --export adds shell-export
-		// output but still blocks with live forwards so the endpoints are
-		// immediately reachable.
+		// Launch tunnels in a background goroutine with context.Background()
+		// so they survive the parent exit and keep loopback endpoints live.
+		// The error goroutine inside cancels the background context when any
+		// tunnel dies, triggering graceful teardown. This lets eval $(...)
+		// consume env vars without blocking while tunnels stay alive.
+		fmt.Fprintf(a.Stderr, "pond %q SSH-mesh daemon started (%d forwards)\n", pond, len(summary.Forwards))
+		go runPondMeshForwards(context.Background(), opts, members, summary)
+		return nil
 	}
 	fmt.Fprintf(a.Stdout, "pond %q SSH-mesh ready (%d forwards)\n", pond, len(summary.Forwards))
 	for _, line := range summary.Exports {
