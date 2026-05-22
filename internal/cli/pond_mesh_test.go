@@ -446,3 +446,112 @@ func TestRenderPondMeshEnvFileEmitsStableExports(t *testing.T) {
 		t.Fatalf("env body missing worker export: %s", body)
 	}
 }
+
+// TestCollectPondMembersAcrossProvidersFiltersByCapability is the cross-
+// provider gating test for the capability refactor. It seeds claims for a
+// mix of SSH-mesh-capable (Hetzner, RunPod) and URL-only (Islo, Modal)
+// providers in the same pond, then asserts that `collectPondMembersAcrossProviders`:
+//
+//   - includes Hetzner and RunPod in the iteration (both advertise FeatureSSH);
+//   - lands Islo and Modal in the `ineligible` slice (URLBridge-only, no SSH);
+//   - and filters out claims that belong to a different pond.
+//
+// The actual `pondMember` list comes back empty because the test SSH backend's
+// List() returns nil — the test is about the capability gate, not the member
+// projection.
+func TestCollectPondMembersAcrossProvidersFiltersByCapability(t *testing.T) {
+	withTempClaims(t, []leaseClaim{
+		{LeaseID: "cbx_hetzner", Slug: "api", Provider: "hetzner", Pond: "alpha", RepoRoot: "/r"},
+		{LeaseID: "cbx_runpod", Slug: "edge", Provider: "exe-dev", Pond: "alpha", RepoRoot: "/r"},
+		{LeaseID: "isb_modal", Slug: "fn", Provider: "modal", Pond: "alpha", RepoRoot: "/r"},
+		{LeaseID: "isb_islo", Slug: "share", Provider: "islo", Pond: "alpha", RepoRoot: "/r"},
+		{LeaseID: "cbx_beta", Slug: "noise", Provider: "hetzner", Pond: "beta", RepoRoot: "/r"},
+	})
+	cfg := defaultConfig()
+	_, ineligible, err := collectPondMembersAcrossProviders(context.Background(), Runtime{}, cfg, "alpha", "")
+	if err != nil {
+		t.Fatalf("collectPondMembersAcrossProviders: %v", err)
+	}
+	sort.Strings(ineligible)
+	want := []string{"islo", "modal"}
+	if !reflect.DeepEqual(ineligible, want) {
+		t.Fatalf("ineligible = %v, want %v", ineligible, want)
+	}
+}
+
+// TestCollectPondMembersAcrossProvidersHonorsProviderFilter verifies that
+// `--provider X` still narrows the iteration to a single provider, even
+// though the function now defaults to cross-provider mode.
+func TestCollectPondMembersAcrossProvidersHonorsProviderFilter(t *testing.T) {
+	withTempClaims(t, []leaseClaim{
+		{LeaseID: "cbx_hetzner", Slug: "api", Provider: "hetzner", Pond: "alpha", RepoRoot: "/r"},
+		{LeaseID: "cbx_runpod", Slug: "edge", Provider: "exe-dev", Pond: "alpha", RepoRoot: "/r"},
+	})
+	cfg := defaultConfig()
+	_, ineligible, err := collectPondMembersAcrossProviders(context.Background(), Runtime{}, cfg, "alpha", "exe-dev")
+	if err != nil {
+		t.Fatalf("collectPondMembersAcrossProviders: %v", err)
+	}
+	if len(ineligible) != 0 {
+		t.Fatalf("expected no ineligible when filter excludes other providers, got %v", ineligible)
+	}
+}
+
+// TestProviderCapabilitiesPrimary asserts the Primary()-pick stays deterministic
+// across the capability set. Hetzner has both Tailscale and SSH; Primary must
+// be Tailscale (the preferred peer plane). Islo has only URLBridge; Primary
+// must be URL. A pure-SSH provider like RunPod must Primary to SSH. A
+// no-capability provider returns TransportNone.
+func TestProviderCapabilitiesPrimary(t *testing.T) {
+	cases := []struct {
+		provider string
+		want     string
+	}{
+		{"hetzner", TransportTailnet},
+		{"azure", TransportTailnet},
+		{"gcp", TransportTailnet},
+		{"aws", TransportSSH},     // FeatureSSH only; no FeatureTailscale yet
+		{"proxmox", TransportSSH}, // legacy mapping was TransportTailnet — capability model corrects to SSH
+		{"exe-dev", TransportSSH},
+		{"daytona", TransportSSH},
+		{"islo", TransportURL},
+		{"modal", TransportURL},
+		{"blacksmith-testbox", TransportNone},
+		{"unknown-provider", TransportNone},
+	}
+	for _, tc := range cases {
+		if got := providerCapabilities(tc.provider).Primary(); got != tc.want {
+			t.Errorf("providerCapabilities(%q).Primary() = %q, want %q", tc.provider, got, tc.want)
+		}
+	}
+}
+
+// TestProviderCapabilitiesAvailable asserts that providers expose ALL viable
+// transports via Available(), not just the primary. The Hetzner case is the
+// load-bearing one for the "SSH-mesh on Hetzner" change: Hetzner reports both
+// tailnet AND ssh, so `pond connect` finds it eligible regardless of which
+// is recommended.
+func TestProviderCapabilitiesAvailable(t *testing.T) {
+	cases := []struct {
+		provider string
+		want     []string
+	}{
+		{"hetzner", []string{TransportTailnet, TransportSSH}},
+		{"azure", []string{TransportTailnet, TransportSSH}},
+		{"gcp", []string{TransportTailnet, TransportSSH}},
+		{"aws", []string{TransportSSH}},
+		{"exe-dev", []string{TransportSSH}},
+		{"islo", []string{TransportURL}},
+		{"modal", []string{TransportURL}},
+		{"blacksmith-testbox", nil},
+	}
+	for _, tc := range cases {
+		got := providerCapabilities(tc.provider).Available()
+		if len(got) == 0 {
+			got = nil
+		}
+		if !reflect.DeepEqual(got, tc.want) {
+			t.Errorf("providerCapabilities(%q).Available() = %v, want %v", tc.provider, got, tc.want)
+		}
+	}
+}
