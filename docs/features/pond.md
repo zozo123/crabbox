@@ -20,14 +20,35 @@ Each lease in a pond is addressable by its `--slug` from any other member of the
 
 ## Three transport planes
 
-| Provider class                                                              | Plane     | What you get                                              |
-| --------------------------------------------------------------------------- | --------- | --------------------------------------------------------- |
-| Managed Linux (Hetzner, Azure, GCP)                                         | Tailscale | true peer-to-peer mesh, `<slug>.cbx` DNS                  |
-| Delegated URL (Islo, E2B, Railway)                                          | Bridge    | HTTPS endpoints between pond members                      |
-| SSH-only (Proxmox, RunPod, exe.dev, Daytona, Sprites, Namespace, Semaphore) | SSH-mesh  | operator-side `ssh -L` tunnels via `pond connect --export` |
-| macOS, Windows                                                              | —         | not yet covered                                           |
+Each provider self-declares which planes it supports via `Spec().Features`
+(`FeatureTailscale`, `FeatureSSH`, `FeatureURLBridge`). Most providers
+declare more than one — a Hetzner box advertises both Tailscale and SSH,
+so it is reachable via either the peer mesh or `pond connect`; an Islo
+sandbox advertises URL Bridge, etc. The CLI verbs opportunistically use
+whichever plane best fits the call site.
 
-`crabbox pond peers` returns a transport hint per member: `tailnet` / `url` / `ssh` / `pending` / `unsupported` / `none`.
+| Plane     | Feature flag       | Providers (today)                                                                                                                                                    | What you get                                                  |
+| --------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Tailscale | `FeatureTailscale` | Hetzner, Azure, GCP                                                                                                                                                  | true peer-to-peer mesh, `<slug>.cbx` DNS                      |
+| Bridge    | `FeatureURLBridge` | Islo, E2B, Railway (live adapters); Modal, Cloudflare, Tensorlake (report `unsupported` until adapters ship)                                                         | HTTPS endpoints between pond members                          |
+| SSH-mesh  | `FeatureSSH`       | **any provider advertising SSH**: Hetzner, Azure, GCP, AWS, Proxmox, static SSH, RunPod, exe-dev, Daytona, Sprites, Namespace, Semaphore, local-container, Parallels | operator-side `ssh -L` tunnels via `pond connect [--export]` |
+| (gap)     | —                  | macOS sandboxes, Windows                                                                                                                                             | not yet covered                                               |
+
+`crabbox pond peers` returns *both* a primary `transport` hint and the
+full `transports` list per member:
+
+```jsonc
+{ "slug": "api",  "provider": "hetzner",
+  "transport":  "tailnet",            // primary / recommended
+  "transports": ["tailnet", "ssh"],   // every plane this provider supports
+  "endpoint":   "100.64.1.3" }
+```
+
+So `pond connect` works against any provider that includes `ssh` in its
+`transports` list — including Hetzner / Azure / GCP / AWS, not just the
+old SSH-only class. Tailscale stays the recommended path when it's also
+available; SSH-mesh becomes a universal fallback that works wherever the
+provider exposes SSH.
 
 ## Three simple use cases
 
