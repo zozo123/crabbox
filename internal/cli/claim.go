@@ -58,7 +58,7 @@ func claimLeaseForRepo(leaseID, slug, repoRoot string, idleTimeout time.Duration
 
 func claimLeaseForRepoConfig(leaseID, slug string, cfg Config, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
 	provider := canonicalClaimProvider(cfg.Provider)
-	return claimLeaseForRepoProviderScope(leaseID, slug, provider, providerClaimScope(provider, cfg), repoRoot, idleTimeout, reclaim)
+	return claimLeaseForRepoProviderScopePond(leaseID, slug, provider, providerClaimScope(provider, cfg), cfg.Pond, repoRoot, idleTimeout, reclaim)
 }
 
 func claimLeaseForRepoProvider(leaseID, slug, provider, repoRoot string, idleTimeout time.Duration, reclaim bool) error {

@@ -618,10 +618,7 @@ func runPondMeshForwards(ctx context.Context, opts pondConnectOptions, members [
 		}
 	}
 	wg.Wait()
-	if firstErr != nil && ctx.Err() == nil {
-		return firstErr
-	}
-	return nil
+	return firstErr
 }
 
 // pondMeshDoctorCounts inspects a slice of servers (already filtered by
