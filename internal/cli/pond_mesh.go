@@ -231,14 +231,26 @@ type pondConnectOptions struct {
 }
 
 // (a App) pondConnect is the Kong-dispatched entry point. It reads pond
-// members, computes the forward table, writes hosts + env, prints the
+// members across *every* SSH-mesh-capable provider in the pond (not just
+// one), computes the unified forward table, writes hosts + env, prints the
 // operator-visible exports, then holds the connections open until the
-// context is cancelled (Ctrl-C). Errors during teardown are best-effort:
-// the operator already knows the connect is over by the time we get there.
+// context is cancelled (Ctrl-C).
+//
+// A provider is SSH-mesh-eligible when providerCapabilities(p).SSHMesh is
+// true (i.e. it advertises FeatureSSH on its Spec). That includes every
+// managed-Linux provider (Hetzner / Azure / GCP / AWS) plus every SSH-lease
+// provider (RunPod / exe.dev / Daytona / Sprites / Namespace / Semaphore /
+// Proxmox / static SSH). The earlier "pond connect requires a single
+// SSH-only provider" restriction is gone — a pond that spans Tailscale-
+// capable boxes and SSH-only sandboxes can be connected with one command.
+//
+// `--provider X` is still accepted but is now a *filter* (single-provider
+// mode), not a requirement. Errors during teardown are best-effort: the
+// operator already knows the connect is over by the time we get there.
 func (a App) pondConnect(ctx context.Context, args []string) error {
 	defaults := defaultConfig()
 	fs := newFlagSet("pond connect", a.Stderr)
-	provider := fs.String("provider", defaults.Provider, providerHelpAll())
+	providerFilter := fs.String("provider", "", "limit to a single provider (default: all SSH-mesh-capable providers in the pond)")
 	jsonOut := fs.Bool("json", false, "print the forward table as JSON and exit")
 	exportOnly := fs.Bool("export", false, "print shell exports for the rendered hosts and exit")
 	providerFlags := registerProviderFlags(fs, defaults)
@@ -259,25 +271,22 @@ func (a App) pondConnect(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	cfg.Provider = *provider
+	if *providerFilter != "" {
+		cfg.Provider = *providerFilter
+	}
 	if err := applyProviderFlags(&cfg, fs, providerFlags); err != nil {
 		return err
 	}
-	backend, err := loadBackend(cfg, runtimeForApp(a))
+	members, ineligible, err := collectPondMembersAcrossProviders(ctx, runtimeForApp(a), cfg, pond, *providerFilter)
 	if err != nil {
 		return err
 	}
-	sshBackend, ok := backend.(SSHLeaseBackend)
-	if !ok {
-		return exit(2, "provider=%s does not expose SSH leases; pond connect requires an SSH-mesh-capable provider", backend.Spec().Name)
+	for _, ip := range ineligible {
+		fmt.Fprintf(a.Stderr, "pond %q: skipping provider %q (no SSH-mesh capability)\n", pond, ip)
 	}
-	servers, err := sshBackend.List(ctx, ListRequest{Options: leaseOptionsFromConfig(cfg)})
-	if err != nil {
-		return err
-	}
-	members, err := collectPondMembers(ctx, sshBackend, cfg, servers, pond)
-	if err != nil {
-		return err
+	if len(members) == 0 {
+		fmt.Fprintf(a.Stderr, "pond %q has no SSH-mesh-capable members\n", pond)
+		return nil
 	}
 	opts := pondConnectOptions{Stdout: a.Stdout, Stderr: a.Stderr, HomeDir: os.Getenv("HOME"), Runner: pondMeshDefaultRunner}
 	summary, err := preparePondMeshSummary(pond, members, opts)
@@ -303,6 +312,71 @@ func (a App) pondConnect(ctx context.Context, args []string) error {
 	}
 	fmt.Fprintf(a.Stdout, "wrote %s\nwrote %s\n", summary.HostsPath, summary.EnvPath)
 	return runPondMeshForwards(ctx, opts, members, summary)
+}
+
+// collectPondMembersAcrossProviders reads local claim sidecars for the pond,
+// groups them by provider, and for each SSH-mesh-capable provider in the set
+// loads its backend, lists leases, and collects pond members. Providers
+// without SSH-mesh capability are returned in the `ineligible` list so the
+// caller can warn the operator (e.g. a URL-only Modal box in the same pond
+// will be skipped here but still appear in `pond peers`).
+//
+// providerFilter, when non-empty, restricts the search to that single
+// provider — the caller passes this through from `--provider X` for users
+// who want the legacy single-provider behavior.
+func collectPondMembersAcrossProviders(ctx context.Context, rt Runtime, cfg Config, pond, providerFilter string) ([]pondMember, []string, error) {
+	claims, err := listLeaseClaims()
+	if err != nil {
+		return nil, nil, err
+	}
+	matches := filterClaimsForPond(claims, pond, providerFilter)
+	if len(matches) == 0 {
+		return nil, nil, nil
+	}
+	byProvider := make(map[string][]leaseClaim)
+	order := make([]string, 0, 4)
+	for _, claim := range matches {
+		key := strings.TrimSpace(claim.Provider)
+		if _, seen := byProvider[key]; !seen {
+			order = append(order, key)
+		}
+		byProvider[key] = append(byProvider[key], claim)
+	}
+	sort.Strings(order)
+	var members []pondMember
+	var ineligible []string
+	for _, p := range order {
+		caps := providerCapabilities(p)
+		if !caps.SSHMesh {
+			ineligible = append(ineligible, p)
+			continue
+		}
+		providerCfg := cfg
+		providerCfg.Provider = p
+		backend, berr := loadBackend(providerCfg, rt)
+		if berr != nil {
+			return nil, nil, fmt.Errorf("load backend for provider %s: %w", p, berr)
+		}
+		sshBackend, ok := backend.(SSHLeaseBackend)
+		if !ok {
+			// Provider declares FeatureSSH but its backend does not implement
+			// SSHLeaseBackend — treat as ineligible (the operator should file
+			// a provider-side bug rather than have pond connect explode).
+			ineligible = append(ineligible, p)
+			continue
+		}
+		servers, serr := sshBackend.List(ctx, ListRequest{Options: leaseOptionsFromConfig(providerCfg)})
+		if serr != nil {
+			return nil, nil, fmt.Errorf("list %s leases: %w", p, serr)
+		}
+		providerMembers, merr := collectPondMembers(ctx, sshBackend, providerCfg, servers, pond)
+		if merr != nil {
+			return nil, nil, fmt.Errorf("collect %s pond members: %w", p, merr)
+		}
+		members = append(members, providerMembers...)
+	}
+	sort.Slice(members, func(i, j int) bool { return members[i].Name < members[j].Name })
+	return members, ineligible, nil
 }
 
 // collectPondMembers narrows a backend's list output to the pond of interest

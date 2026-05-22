@@ -102,6 +102,7 @@ const (
 	FeatureBrowser     Feature = "browser"
 	FeatureCode        Feature = "code"
 	FeatureTailscale   Feature = "tailscale"
+	FeatureURLBridge   Feature = "url-bridge"
 	FeatureCheckpoint  Feature = "workspace-checkpoint"
 	FeatureFork        Feature = "workspace-fork"
 	FeatureRestore     Feature = "workspace-restore"

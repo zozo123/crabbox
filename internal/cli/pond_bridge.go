@@ -27,11 +27,21 @@ import (
 // shape: it carries "unsupported" / "unsupported-provider" for URL-transport
 // peers whose per-provider adapter explicitly cannot bridge.
 type BridgePeer struct {
-	Slug        string             `json:"slug"`
-	LeaseID     string             `json:"leaseID"`
-	Provider    string             `json:"provider"`
-	Pond        string             `json:"pond"`
-	Transport   string             `json:"transport"`
+	Slug     string `json:"slug"`
+	LeaseID  string `json:"leaseID"`
+	Provider string `json:"provider"`
+	Pond     string `json:"pond"`
+	// Transport is the *primary* (recommended) plane this peer reports —
+	// derived from providerCapabilities(provider).Primary(). Kept for
+	// backward compatibility with callers that want a single value.
+	Transport string `json:"transport"`
+	// Transports lists *every* plane this peer's provider supports (peer
+	// mesh, native HTTPS, operator-routed SSH), in preference order. Callers
+	// that need the full reachability surface (e.g. `pond connect` deciding
+	// SSH-mesh eligibility regardless of whether the provider also has
+	// Tailscale) read this list. Empty for providers with no networking
+	// (e.g. Blacksmith).
+	Transports  []string           `json:"transports,omitempty"`
 	Endpoint    string             `json:"endpoint"`
 	Labels      map[string]string  `json:"labels,omitempty"`
 	Note        string             `json:"note,omitempty"`
@@ -327,11 +337,12 @@ func resolvePondPeersForProvider(ctx context.Context, rt Runtime, provider strin
 // from the claim sidecar without any provider API calls.
 func bridgePeerFromClaim(claim leaseClaim, class string) BridgePeer {
 	peer := BridgePeer{
-		Slug:     claim.Slug,
-		LeaseID:  claim.LeaseID,
-		Provider: claim.Provider,
-		Pond:     claim.Pond,
-		Labels:   cloneStringMap(claim.Labels),
+		Slug:       claim.Slug,
+		LeaseID:    claim.LeaseID,
+		Provider:   claim.Provider,
+		Pond:       claim.Pond,
+		Labels:     cloneStringMap(claim.Labels),
+		Transports: providerCapabilities(claim.Provider).Available(),
 	}
 	switch class {
 	case TransportTailnet:
@@ -372,23 +383,21 @@ func bridgePeerFromClaim(claim leaseClaim, class string) BridgePeer {
 	return peer
 }
 
-// providerTransportClass maps a provider name to its transport class. The
-// mapping is authoritative here (rather than derived from provider feature
-// flags) so the classification is stable when a future provider's Go-side
-// adapter lags behind the lease-record format.
+// providerTransportClass returns the *primary* (recommended) transport for a
+// provider. It used to hardcode a 1:1 mapping; that's now derived from the
+// provider's capability set so a single provider can advertise multiple
+// planes (Hetzner has both Tailscale and SSH-mesh; Islo has all three) and
+// the recommended one is picked deterministically.
+//
+// Most call sites in `pond peers` and the doctor reachability matrix still
+// want one value per peer for legacy single-valued reporting; those keep
+// using this function. The full set of available transports is exposed via
+// `providerCapabilities(p).Available()` and surfaced on
+// `BridgePeer.Transports` so callers that want the multi-transport view
+// (e.g. `pond connect` deciding which members it can SSH into regardless of
+// whether they ALSO support Tailscale) read the capabilities directly.
 func providerTransportClass(provider string) string {
-	switch normalizeProviderName(provider) {
-	case "aws", "azure", "gcp", "hetzner", "proxmox", "ssh":
-		return TransportTailnet
-	case "exe-dev", "exedev", "runpod", "daytona", "sprites", "namespace", "namespace-devbox", "semaphore":
-		return TransportSSH
-	case "islo", "e2b", "modal", "cloudflare", "railway", "tensorlake":
-		return TransportURL
-	case "blacksmith", "blacksmith-testbox":
-		return TransportNone
-	default:
-		return TransportNone
-	}
+	return providerCapabilities(provider).Primary()
 }
 
 func cloneStringMap(in map[string]string) map[string]string {
