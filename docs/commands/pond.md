@@ -11,8 +11,26 @@ crabbox pond peers --pond alpha
 crabbox pond peers --pond alpha --json
 crabbox pond peers --pond alpha --provider islo --share-port 8080
 crabbox pond peers --pond alpha --share-port 8080 --share-ttl 1h --json
+crabbox pond release alpha
 crabbox doctor --pond alpha
 ```
+
+## `pond release`
+
+Stop every lease in the named pond across all providers and remove their
+claim sidecars. No `--provider` flag is needed — the command iterates every
+claim whose pond label matches. Individual stop failures are logged as
+warnings and do not block the remaining peers.
+
+```sh
+crabbox pond release alpha
+```
+
+The command loads each provider backend from the claim sidecar, calls the
+appropriate stop path (`DelegatedRunBackend.Stop` or
+`SSHLeaseBackend.ReleaseLease`), and removes the local claim file on
+success. Leases on providers without a stop-capable backend are skipped
+with a warning.
 
 ## `pond peers`
 

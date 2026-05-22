@@ -13,7 +13,7 @@ crabbox list   --pond NAME
 crabbox doctor --pond NAME
 crabbox pond peers   --pond NAME
 crabbox pond connect NAME [--export]
-crabbox release --pond NAME
+crabbox pond release NAME
 ```
 
 Each lease in a pond is addressable by its `--slug` from any other member of the same pond.
@@ -56,7 +56,7 @@ provider exposes SSH.
    ```
    crabbox warmup --pond pr-$PR --slug api/web/db --provider hetzner --tailscale
    # ... E2E ...
-   crabbox release --pond pr-$PR
+   crabbox pond release pr-$PR
    ```
 
 2. **API + GPU + DB integration test.** Vendor-mix in 4 lines — CPU on Hetzner, GPU on Modal, DB on Hetzner — talking by name:

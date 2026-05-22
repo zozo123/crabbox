@@ -16,9 +16,6 @@
 - Fixed `provider: docker` stop/release cleanup so host-visible per-lease work directories created for Docker socket pass-through are removed with the lease.
 - Fixed local Actions hydration for repo-local composite actions, cache no-ops, simple input conditions, safe `hashFiles`, secret-expression rejection, and Node 24.x setup on minimal Debian images.
 
-- Added `--crew <name>` for `crabbox warmup`/`run` plus `crabbox list --crew
-  <name>` so related leases share a reserved `crew` provider label and can be
-
 - Added `--pond <name>` for `crabbox warmup`/`run` plus `crabbox list --pond
   <name>` so related leases share a reserved `pond` provider label and can be
   selected together. On Tailscale-capable providers (Hetzner, Azure, GCP
@@ -56,6 +53,14 @@
   only — no lease-to-lease mesh in v0. Useful for SSH-only providers
   (RunPod, Proxmox, exe.dev, Daytona, Sprites, Namespace, Semaphore)
   where neither Tailscale nor the Bridge plane applies.
+
+- Added `crabbox pond release <name>` — releases every lease in the named pond
+  across all providers, removing their claim sidecars. Individual stop failures
+  are logged as warnings without blocking remaining peers.
+
+- Added `pond` field to `crabbox status` output — status now shows `pond=<name>`
+  when a lease belongs to a pond, so operators can see pond membership without
+  parsing provider labels.
 
 ## 0.17.0 - 2026-05-21
 

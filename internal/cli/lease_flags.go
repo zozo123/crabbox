@@ -66,6 +66,12 @@ func applyLeaseCreateFlagsForLease(cfg *Config, fs *flag.FlagSet, values leaseCr
 			return err
 		}
 		cfg.Pond = pond
+	} else if cfg.Pond != "" {
+		pond, err := requestedPondName(cfg.Pond)
+		if err != nil {
+			return err
+		}
+		cfg.Pond = pond
 	}
 	applyCapabilityFlags(cfg, *values.Desktop, *values.Browser, *values.Code)
 	if err := applyTargetFlagOverrides(cfg, fs, values.Target); err != nil {

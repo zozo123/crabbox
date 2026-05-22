@@ -113,6 +113,8 @@ func (a App) pond(ctx context.Context, args []string) error {
 	switch args[0] {
 	case "peers":
 		return a.pondPeers(ctx, args[1:])
+	case "release":
+		return a.pondRelease(ctx, args[1:])
 	case "-h", "--help", "help":
 		a.pondHelp()
 		return nil
@@ -123,12 +125,17 @@ func (a App) pond(ctx context.Context, args []string) error {
 }
 
 func (a App) pondHelp() {
-	fmt.Fprintln(a.Stdout, `Pond bridge plane — list peer endpoints for delegated providers.
+	fmt.Fprintln(a.Stdout, `Pond — cross-provider peer discovery and lifecycle.
 
 Usage:
-  crabbox pond peers --pond <name> [flags]
+  crabbox pond peers   --pond <name> [flags]
+  crabbox pond release <name>
 
-Flags:
+Subcommands:
+  peers   List every peer in the named pond, regardless of provider.
+  release Stop every lease in the named pond and remove their claims.
+
+Flags for ` + "`pond peers`" + `:
   --pond <name>          Required. Pond label to resolve.
   --provider <name>      Restrict to a single provider (default: all delegated
                          providers in the pond).
@@ -141,6 +148,7 @@ Examples:
   crabbox pond peers --pond alpha --provider islo
   crabbox pond peers --pond alpha --json
   crabbox pond peers --pond alpha --share-port 8080 --json
+  crabbox pond release alpha
 
 The bridge plane is HTTP-only by design: peers are reachable via the per-
 provider native ingress (islo shares, e2b sandbox previews, railway deploy
@@ -185,6 +193,91 @@ func (a App) pondPeers(ctx context.Context, args []string) error {
 	}
 	renderBridgePeers(a.Stdout, peers)
 	return nil
+}
+
+// pondRelease stops every lease in the named pond and removes their claims.
+// It iterates across all providers represented in the pond — the caller does
+// not need to pass --provider. Individual stop failures are logged as warnings
+// and do not block the remaining peers; the function returns the first error
+// encountered so callers can decide whether the release was clean.
+func (a App) pondRelease(ctx context.Context, args []string) error {
+	pond, err := requestedPondName(strings.Join(args, " "))
+	if err != nil {
+		return err
+	}
+	if pond == "" {
+		return exit(2, "usage: crabbox pond release <name>")
+	}
+	claims, err := listLeaseClaims()
+	if err != nil {
+		return err
+	}
+	matches := filterClaimsForPond(claims, pond, "")
+	if len(matches) == 0 {
+		fmt.Fprintf(a.Stdout, "pond %q has no active leases\n", pond)
+		return nil
+	}
+	fmt.Fprintf(a.Stderr, "releasing pond %q (%d lease(s))\n", pond, len(matches))
+	var firstErr error
+	for _, claim := range matches {
+		cfg, cerr := loadConfig()
+		if cerr != nil {
+			if firstErr == nil {
+				firstErr = cerr
+			}
+			fmt.Fprintf(a.Stderr, "warning: skip %s/%s: load config: %v\n", claim.Provider, claim.LeaseID, cerr)
+			continue
+		}
+		cfg.Provider = claim.Provider
+		backend, berr := loadBackend(cfg, runtimeForApp(a))
+		if berr != nil {
+			if firstErr == nil {
+				firstErr = berr
+			}
+			fmt.Fprintf(a.Stderr, "warning: skip %s/%s: load backend: %v\n", claim.Provider, claim.LeaseID, berr)
+			continue
+		}
+		if delegated, ok := backend.(DelegatedRunBackend); ok {
+			if serr := delegated.Stop(ctx, StopRequest{Options: leaseOptionsFromConfig(cfg), ID: claim.LeaseID}); serr != nil {
+				if firstErr == nil {
+					firstErr = serr
+				}
+				fmt.Fprintf(a.Stderr, "warning: %s/%s stop failed: %v\n", claim.Provider, claim.LeaseID, serr)
+			} else {
+				removeLeaseClaim(claim.LeaseID)
+				fmt.Fprintf(a.Stderr, "released %s/%s slug=%s\n", claim.Provider, claim.LeaseID, blank(claim.Slug, "-"))
+			}
+			continue
+		}
+		sshBackend, ok := backend.(SSHLeaseBackend)
+		if !ok {
+			fmt.Fprintf(a.Stderr, "warning: skip %s/%s: provider does not support stop\n", claim.Provider, claim.LeaseID)
+			continue
+		}
+		lease, rerr := sshBackend.Resolve(ctx, ResolveRequest{Options: leaseOptionsFromConfig(cfg), ID: claim.LeaseID, ReleaseOnly: true})
+		if rerr != nil {
+			if backendCoordinator(backend) != nil {
+				fmt.Fprintf(a.Stderr, "warning: could not inspect %s/%s before release: %v\n", claim.Provider, claim.LeaseID, rerr)
+				lease = LeaseTarget{LeaseID: claim.LeaseID}
+			} else {
+				if firstErr == nil {
+					firstErr = rerr
+				}
+				fmt.Fprintf(a.Stderr, "warning: %s/%s resolve failed: %v\n", claim.Provider, claim.LeaseID, rerr)
+				continue
+			}
+		}
+		if lerr := sshBackend.ReleaseLease(ctx, ReleaseLeaseRequest{Lease: lease, Force: true}); lerr != nil {
+			if firstErr == nil {
+				firstErr = lerr
+			}
+			fmt.Fprintf(a.Stderr, "warning: %s/%s release failed: %v\n", claim.Provider, claim.LeaseID, lerr)
+		} else {
+			removeLeaseClaim(claim.LeaseID)
+			fmt.Fprintf(a.Stderr, "released %s/%s slug=%s\n", claim.Provider, claim.LeaseID, blank(claim.Slug, "-"))
+		}
+	}
+	return firstErr
 }
 
 // pondPeersJSON wraps the peer list so the JSON output matches the

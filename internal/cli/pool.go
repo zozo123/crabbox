@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -85,27 +86,21 @@ func (a App) list(ctx context.Context, args []string) error {
 // backend produces) by inspecting label-bearing entries. Backends that emit
 // shapes without labels are returned unchanged so JSON list output stays
 // authoritative for those providers.
+//
+// For []any slices entries are iterated directly. For typed slices (e.g.
+// []CoordinatorMachine, []CoordinatorLease emitted by coordinator-backed
+// ListJSON) we use reflection to walk entries and extract labels without a
+// JSON marshal/unmarshal round-trip that would silently change number types
+// (int → float64). Typed entries are kept in their original form so downstream
+// JSON encoding preserves field order, struct tags, and number precision.
 func filterJSONListViewByPond(view any, pond string) any {
 	pond = normalizePondName(pond)
 	if pond == "" {
 		return view
 	}
-	// JSON round-trip so typed slices ([]CoordinatorMachine, []CoordinatorLease,
-	// etc. emitted by coordinator-backed ListJSON) become walkable []any without
-	// per-type reflection. Without this the type assertion below falls back to
-	// the unchanged view for every coordinator-backed provider, silently
-	// returning unfiltered results in `--json` mode (Codex P1, pool.go:95).
-	if _, ok := view.([]any); !ok {
-		if raw, err := json.Marshal(view); err == nil {
-			var normalized []any
-			if err := json.Unmarshal(raw, &normalized); err == nil {
-				view = normalized
-			}
-		}
-	}
 	entries, ok := view.([]any)
 	if !ok {
-		return view
+		return filterTypedSliceByPond(view, pond)
 	}
 	hasLabels := false
 	for _, entry := range entries {
@@ -146,6 +141,35 @@ func extractLabelMap(entry any) map[string]string {
 		}
 	}
 	return labels
+}
+
+// filterTypedSliceByPond handles typed slices ([]CoordinatorMachine,
+// []CoordinatorLease, etc.) by using reflection to iterate entries and extract
+// labels, preserving the original entry structs. This avoids a JSON marshal/
+// unmarshal round-trip that would silently change number types (int → float64)
+// and lose struct-specific JSON encoding (field tags, ordering, omitempty).
+func filterTypedSliceByPond(view any, pond string) any {
+	v := reflect.ValueOf(view)
+	if v.Kind() != reflect.Slice {
+		return view
+	}
+	elemType := v.Type().Elem()
+	hasLabels := false
+	kept := reflect.MakeSlice(reflect.SliceOf(elemType), 0, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		elem := v.Index(i)
+		labels := extractLabelMap(elem.Interface())
+		if labels != nil {
+			hasLabels = true
+			if normalizePondName(labels[pondLabelKey]) == pond {
+				kept = reflect.Append(kept, elem)
+			}
+		}
+	}
+	if !hasLabels {
+		return view
+	}
+	return kept.Interface()
 }
 
 func (a App) syncExternalRunnersBestEffort(ctx context.Context, cfg Config, backend Backend) {
