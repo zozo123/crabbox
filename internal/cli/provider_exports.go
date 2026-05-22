@@ -58,6 +58,13 @@ func ClaimLeaseForRepoProviderPond(leaseID, slug, provider, pond, repoRoot strin
 	return claimLeaseForRepoProviderScopePond(leaseID, slug, provider, "", pond, repoRoot, idleTimeout, reclaim)
 }
 
+// ClaimLeaseForRepoProviderScopePond combines a provider scope (e.g. Docker
+// context for local-container claim isolation) with the pond label so both
+// features coexist in the same claim sidecar without one overwriting the other.
+func ClaimLeaseForRepoProviderScopePond(leaseID, slug, provider, providerScope, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
+	return claimLeaseForRepoProviderScopePond(leaseID, slug, provider, providerScope, pond, repoRoot, idleTimeout, reclaim)
+}
+
 func ResolveLeaseClaim(identifier string) (LeaseClaim, bool, error) {
 	return resolveLeaseClaim(identifier)
 }
