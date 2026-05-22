@@ -16,6 +16,19 @@
 - Fixed `provider: docker` stop/release cleanup so host-visible per-lease work directories created for Docker socket pass-through are removed with the lease.
 - Fixed local Actions hydration for repo-local composite actions, cache no-ops, simple input conditions, safe `hashFiles`, secret-expression rejection, and Node 24.x setup on minimal Debian images.
 
+- Added `--crew <name>` for `crabbox warmup`/`run` plus `crabbox list --crew
+  <name>` so related leases share a reserved `crew` provider label and can be
+  selected together. On Tailscale-capable providers (Hetzner, Azure, GCP
+  managed Linux) the CLI advertises one extra ACL tag
+  `tag:cbx-crew-<owner>-<crew>` when the box joins the tailnet, and cloud-init
+  installs a 30s systemd timer that rewrites `/etc/hosts.cbx` and a managed
+  `/etc/hosts` block from `tailscale status --json` so peers are reachable as
+  `<slug>.cbx`. `crabbox doctor --crew <name>` verifies the one-time concrete
+  crew grants or ACL row when `TS_API_KEY` is exported and skips with a hint otherwise;
+  non-Tailscale providers honor the label as metadata and `doctor --crew`
+  reports the missing plane. See `docs/features/crew.md` for the one-time
+  policy snippet.
+
 ## 0.17.0 - 2026-05-21
 
 ### Added
