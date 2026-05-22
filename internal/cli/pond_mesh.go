@@ -304,7 +304,11 @@ func (a App) pondConnect(ctx context.Context, args []string) error {
 		for _, line := range summary.Exports {
 			fmt.Fprintln(a.Stdout, line)
 		}
-		return nil
+		// Fall through to run the tunnels. The earlier behaviour of returning
+		// here meant the advertised loopback endpoints had no SSH tunnel behind
+		// them (Codex P1, pond_mesh.go:307). Now --export adds shell-export
+		// output but still blocks with live forwards so the endpoints are
+		// immediately reachable.
 	}
 	fmt.Fprintf(a.Stdout, "pond %q SSH-mesh ready (%d forwards)\n", pond, len(summary.Forwards))
 	for _, line := range summary.Exports {

@@ -128,11 +128,11 @@ func filterJSONListViewByPond(view any, pond string) any {
 func extractLabelMap(entry any) map[string]string {
 	mapEntry, ok := entry.(map[string]any)
 	if !ok {
-		return nil
+		return extractLabelMapFromStruct(entry)
 	}
 	raw, ok := mapEntry["labels"].(map[string]any)
 	if !ok {
-		return nil
+		return extractLabelMapFromStruct(entry)
 	}
 	labels := make(map[string]string, len(raw))
 	for key, value := range raw {
@@ -141,6 +141,52 @@ func extractLabelMap(entry any) map[string]string {
 		}
 	}
 	return labels
+}
+
+// extractLabelMapFromStruct uses reflection to extract a Labels field from a
+// typed struct (e.g. CoordinatorMachine, CoordinatorLease). The field must be
+// of type map[string]string for direct extraction. map[string]any values are
+// converted by filtering string-typed entries. This handles the coordinator
+// list JSON path where typed slices bypass the map[string]any type assertion.
+func extractLabelMapFromStruct(entry any) map[string]string {
+	v := reflect.ValueOf(entry)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return nil
+	}
+	field := v.FieldByName("Labels")
+	if !field.IsValid() {
+		// Also try lowercase "labels" for map-key-style access.
+		field = v.FieldByName("labels")
+	}
+	if !field.IsValid() || !field.CanInterface() {
+		return nil
+	}
+	switch fv := field.Interface().(type) {
+	case map[string]string:
+		if len(fv) == 0 {
+			return nil
+		}
+		out := make(map[string]string, len(fv))
+		for k, v := range fv {
+			out[k] = v
+		}
+		return out
+	case map[string]any:
+		if len(fv) == 0 {
+			return nil
+		}
+		out := make(map[string]string, len(fv))
+		for k, v := range fv {
+			if str, ok := v.(string); ok {
+				out[k] = str
+			}
+		}
+		return out
+	}
+	return nil
 }
 
 // filterTypedSliceByPond handles typed slices ([]CoordinatorMachine,

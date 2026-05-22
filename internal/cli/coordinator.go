@@ -642,6 +642,7 @@ func (c *CoordinatorClient) CreateLease(ctx context.Context, cfg Config, publicK
 		"idleTimeoutSeconds":              int(cfg.IdleTimeout.Seconds()),
 		"keep":                            keep,
 		"sshPublicKey":                    publicKey,
+		"pond":                            cfg.Pond,
 	}
 	if len(capacity) > 0 {
 		req["capacity"] = capacity
