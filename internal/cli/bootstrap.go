@@ -922,13 +922,13 @@ func cloudInitTailscaleBootstrap(cfg Config) string {
     fi
     chown ` + sshUserChown + ` /var/lib/crabbox/tailscale-* || true
     chmod 0640 /var/lib/crabbox/tailscale-* || true`
-	if pond := normalizeCrewName(cfg.Pond); pond != "" {
-		tailscaleUpScript += "\n" + cloudInitCrewHostsBootstrap(cfg.Pond)
+	if pond := normalizePondName(cfg.Pond); pond != "" {
+		tailscaleUpScript += "\n" + cloudInitPondHostsBootstrap(cfg.Pond)
 	}
 	return tailscaleUpScript
 }
 
-// cloudInitCrewHostsBootstrap installs /usr/local/bin/crabbox-pond-hosts and a
+// cloudInitPondHostsBootstrap installs /usr/local/bin/crabbox-pond-hosts and a
 // systemd timer that rewrites /etc/hosts.cbx plus a managed /etc/hosts block
 // every 30s with one entry per pond peer reachable on the local tailnet. Peers
 // are discovered purely from the box-local `tailscale status --json` output
@@ -936,16 +936,16 @@ func cloudInitTailscaleBootstrap(cfg Config) string {
 // credential. Each peer renders as `<tailnet-ipv4> <slug>.cbx` where `<slug>`
 // is the suffix of the `crabbox-<slug>` hostname template every
 // Tailscale-capable provider already uses.
-func cloudInitCrewHostsBootstrap(pond string) string {
-	tag := crewTailscaleTag(localCoordinatorOwner(), pond)
+func cloudInitPondHostsBootstrap(pond string) string {
+	tag := pondTailscaleTag(localCoordinatorOwner(), pond)
 	if tag == "" {
 		return ""
 	}
-	hostsFile := shellQuote(crewHostsFile)
+	hostsFile := shellQuote(pondHostsFile)
 	tagLiteral := shellQuote(tag)
 	systemHostsFile := shellQuote("/etc/hosts")
 	return `    install -m 0644 /dev/null ` + hostsFile + ` || true
-    cat >/usr/local/bin/crabbox-pond-hosts <<'CREWHOSTS'
+    cat >/usr/local/bin/crabbox-pond-hosts <<'PONDHOSTS'
 #!/bin/sh
 set -eu
 TAG="$1"
@@ -988,9 +988,9 @@ fi
 } >"$SYSTEM_HOSTS".new
 mv "$SYSTEM_HOSTS".new "$SYSTEM_HOSTS"
 chmod 0644 "$SYSTEM_HOSTS"
-CREWHOSTS
+PONDHOSTS
     chmod 0755 /usr/local/bin/crabbox-pond-hosts
-    cat >/etc/systemd/system/crabbox-pond-hosts.service <<'CREWUNIT'
+    cat >/etc/systemd/system/crabbox-pond-hosts.service <<'PONDUNIT'
 [Unit]
 Description=Refresh Crabbox pond peer hostnames
 After=tailscaled.service network-online.target
@@ -998,21 +998,21 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/crabbox-pond-hosts ` + tag + ` ` + crewHostsFile + ` /etc/hosts
-CREWUNIT
-    cat >/etc/systemd/system/crabbox-pond-hosts.timer <<'CREWTIMER'
+ExecStart=/usr/local/bin/crabbox-pond-hosts ` + tag + ` ` + pondHostsFile + ` /etc/hosts
+PONDUNIT
+    cat >/etc/systemd/system/crabbox-pond-hosts.timer <<'PONDTIMER'
 [Unit]
-Description=Refresh Crabbox pond hostnames every ` + crewHostsRefreshPeriod + `
+Description=Refresh Crabbox pond hostnames every ` + pondHostsRefreshPeriod + `
 
 [Timer]
 OnBootSec=10s
-OnUnitActiveSec=` + crewHostsRefreshPeriod + `
+OnUnitActiveSec=` + pondHostsRefreshPeriod + `
 AccuracySec=2s
 Unit=crabbox-pond-hosts.service
 
 [Install]
 WantedBy=timers.target
-CREWTIMER
+PONDTIMER
     systemctl daemon-reload
     systemctl enable --now crabbox-pond-hosts.timer
     /usr/local/bin/crabbox-pond-hosts ` + tagLiteral + ` ` + hostsFile + ` ` + systemHostsFile + ` || true

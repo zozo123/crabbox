@@ -473,7 +473,7 @@ func leaseOptionsFromConfig(cfg Config) LeaseOptions {
 		TargetOS:      cfg.TargetOS,
 		WindowsMode:   cfg.WindowsMode,
 		Class:         cfg.Class,
-		Pond:          normalizeCrewName(cfg.Pond),
+		Pond:          normalizePondName(cfg.Pond),
 		ServerType:    cfg.ServerType,
 		IdleTimeout:   cfg.IdleTimeout,
 		TTL:           cfg.TTL,

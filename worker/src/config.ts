@@ -200,14 +200,14 @@ export function leaseConfig(input: LeaseRequest, defaults: LeaseConfigDefaults =
     idleTimeoutSeconds,
     keep: input.keep ?? false,
     sshPublicKey,
-    pond: normalizeCrewName(input.pond ?? ""),
+    pond: normalizePondName(input.pond ?? ""),
   };
 }
 
-// normalizeCrewName mirrors the Go-side helper in internal/cli/pond.go. The
+// normalizePondName mirrors the Go-side helper in internal/cli/pond.go. The
 // `pond` label is a reserved provider-label key that groups N leases so peers
 // can be selected by `crabbox list --pond <name>`.
-export function normalizeCrewName(value: string): string {
+export function normalizePondName(value: string): string {
   return value
     .toLowerCase()
     .trim()

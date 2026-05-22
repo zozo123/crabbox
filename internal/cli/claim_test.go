@@ -26,10 +26,10 @@ func TestClaimLeaseForRepoWritesAndUpdatesClaim(t *testing.T) {
 	}
 }
 
-func TestClaimLeaseForRepoProviderStoresCrew(t *testing.T) {
+func TestClaimLeaseForRepoProviderStoresPond(t *testing.T) {
 	t.Setenv("XDG_STATE_HOME", t.TempDir())
 	repo := filepath.Join(t.TempDir(), "repo")
-	if err := claimLeaseForRepoProviderWithCrew("isb_crabbox-test", "web", "islo", "Alpha Pond", repo, 30*time.Minute, false); err != nil {
+	if err := claimLeaseForRepoProviderWithPond("isb_crabbox-test", "web", "islo", "Alpha Pond", repo, 30*time.Minute, false); err != nil {
 		t.Fatal(err)
 	}
 	claim, err := readLeaseClaim("isb_crabbox-test")

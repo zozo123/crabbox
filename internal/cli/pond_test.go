@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func TestNormalizeCrewName(t *testing.T) {
+func TestNormalizePondName(t *testing.T) {
 	cases := []struct {
 		in   string
 		want string
@@ -26,33 +26,33 @@ func TestNormalizeCrewName(t *testing.T) {
 		{"123-abc", "123-abc"},
 	}
 	for _, tc := range cases {
-		if got := normalizeCrewName(tc.in); got != tc.want {
-			t.Fatalf("normalizeCrewName(%q)=%q want %q", tc.in, got, tc.want)
+		if got := normalizePondName(tc.in); got != tc.want {
+			t.Fatalf("normalizePondName(%q)=%q want %q", tc.in, got, tc.want)
 		}
 	}
 }
 
-func TestRequestedCrewNameValidates(t *testing.T) {
-	got, err := requestedCrewName(" Alpha Pond ")
+func TestRequestedPondNameValidates(t *testing.T) {
+	got, err := requestedPondName(" Alpha Pond ")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got != "alpha-pond" {
 		t.Fatalf("pond=%q want alpha-pond", got)
 	}
-	if got, err := requestedCrewName(""); err != nil || got != "" {
+	if got, err := requestedPondName(""); err != nil || got != "" {
 		t.Fatalf("empty input got=%q err=%v", got, err)
 	}
-	if _, err := requestedCrewName("!!"); err == nil {
+	if _, err := requestedPondName("!!"); err == nil {
 		t.Fatalf("expected error for pond with no alnum")
 	}
-	tooLong := strings.Repeat("a", maxRequestedCrewNameLength+1)
-	if _, err := requestedCrewName(tooLong); err == nil {
-		t.Fatalf("expected error for pond %d chars", maxRequestedCrewNameLength+1)
+	tooLong := strings.Repeat("a", maxRequestedPondNameLength+1)
+	if _, err := requestedPondName(tooLong); err == nil {
+		t.Fatalf("expected error for pond %d chars", maxRequestedPondNameLength+1)
 	}
 }
 
-func TestDirectLeaseLabelsRecordCrew(t *testing.T) {
+func TestDirectLeaseLabelsRecordPond(t *testing.T) {
 	now := time.Date(2026, 5, 18, 12, 0, 0, 0, time.UTC)
 	cfg := Config{
 		Class:       "standard",
@@ -69,7 +69,7 @@ func TestDirectLeaseLabelsRecordCrew(t *testing.T) {
 	}
 }
 
-func TestDirectLeaseLabelsOmitCrewWhenEmpty(t *testing.T) {
+func TestDirectLeaseLabelsOmitPondWhenEmpty(t *testing.T) {
 	now := time.Date(2026, 5, 18, 12, 0, 0, 0, time.UTC)
 	cfg := Config{
 		Class:       "standard",
@@ -85,29 +85,29 @@ func TestDirectLeaseLabelsOmitCrewWhenEmpty(t *testing.T) {
 	}
 }
 
-func TestFilterServersByCrew(t *testing.T) {
+func TestFilterServersByPond(t *testing.T) {
 	servers := []Server{
 		{Name: "a", Labels: map[string]string{"pond": "alpha"}},
 		{Name: "b", Labels: map[string]string{"pond": "bravo"}},
 		{Name: "c", Labels: map[string]string{}},
 		{Name: "d", Labels: map[string]string{"pond": "Alpha"}},
 	}
-	got := filterServersByCrew(servers, "alpha")
+	got := filterServersByPond(servers, "alpha")
 	if len(got) != 2 {
 		t.Fatalf("expected 2 servers for pond=alpha, got %d (%#v)", len(got), got)
 	}
 	if got[0].Name != "a" || got[1].Name != "d" {
 		t.Fatalf("filtered set unexpected: %#v", got)
 	}
-	if same := filterServersByCrew(servers, ""); len(same) != len(servers) {
+	if same := filterServersByPond(servers, ""); len(same) != len(servers) {
 		t.Fatalf("empty filter should be a no-op, got %d", len(same))
 	}
-	if none := filterServersByCrew(servers, "charlie"); len(none) != 0 {
+	if none := filterServersByPond(servers, "charlie"); len(none) != 0 {
 		t.Fatalf("expected zero matches for pond=charlie, got %d", len(none))
 	}
 }
 
-func TestApplyLeaseCreateFlagsSetsCrew(t *testing.T) {
+func TestApplyLeaseCreateFlagsSetsPond(t *testing.T) {
 	defaults := Config{
 		Provider:    "hetzner",
 		Profile:     "default",
@@ -136,7 +136,7 @@ func TestApplyLeaseCreateFlagsSetsCrew(t *testing.T) {
 	}
 }
 
-func TestApplyLeaseCreateFlagsRejectsBadCrew(t *testing.T) {
+func TestApplyLeaseCreateFlagsRejectsBadPond(t *testing.T) {
 	defaults := Config{
 		Provider:    "hetzner",
 		Profile:     "default",
@@ -158,7 +158,7 @@ func TestApplyLeaseCreateFlagsRejectsBadCrew(t *testing.T) {
 	}
 }
 
-func TestFilterJSONListViewByCrew(t *testing.T) {
+func TestFilterJSONListViewByPond(t *testing.T) {
 	view := []any{
 		map[string]any{"id": "a", "labels": map[string]any{"pond": "alpha"}},
 		map[string]any{"id": "b", "labels": map[string]any{"pond": "bravo"}},
@@ -166,7 +166,7 @@ func TestFilterJSONListViewByCrew(t *testing.T) {
 		map[string]any{"id": "d", "labels": map[string]any{"pond": "Alpha"}},
 		"not-a-map",
 	}
-	filtered := filterJSONListViewByCrew(view, "alpha")
+	filtered := filterJSONListViewByPond(view, "alpha")
 	out, ok := filtered.([]any)
 	if !ok {
 		t.Fatalf("expected []any, got %T", filtered)
@@ -174,17 +174,17 @@ func TestFilterJSONListViewByCrew(t *testing.T) {
 	if len(out) != 2 {
 		t.Fatalf("expected 2 entries, got %d (%#v)", len(out), out)
 	}
-	if same := filterJSONListViewByCrew(view, ""); !sameAny(same, view) {
+	if same := filterJSONListViewByPond(view, ""); !sameAny(same, view) {
 		t.Fatalf("empty filter should be identity")
 	}
-	if other := filterJSONListViewByCrew("not-a-list", "alpha"); other != "not-a-list" {
+	if other := filterJSONListViewByPond("not-a-list", "alpha"); other != "not-a-list" {
 		t.Fatalf("non-slice view should pass through unchanged, got %#v", other)
 	}
 	unsupported := []any{
 		map[string]any{"id": "native-a", "state": "ready"},
 		map[string]any{"id": "native-b", "state": "leased"},
 	}
-	if same := filterJSONListViewByCrew(unsupported, "alpha"); fmt.Sprintf("%#v", same) != fmt.Sprintf("%#v", unsupported) {
+	if same := filterJSONListViewByPond(unsupported, "alpha"); fmt.Sprintf("%#v", same) != fmt.Sprintf("%#v", unsupported) {
 		t.Fatalf("unlabeled JSON list should pass through unchanged, got %#v", same)
 	}
 }
@@ -206,37 +206,63 @@ func sameAny(a, b any) bool {
 	return true
 }
 
-func TestCrewTagOwnerTruncatesAndNormalizes(t *testing.T) {
-	cases := []struct {
-		in   string
-		want string
-	}{
-		{"yossi.eliaz@incredibuild.com", "yossi-e"},
-		{"  Alpha.Bravo@example.com  ", "alpha-b"},
-		{"a@b", "a"},
-		{"!!", ""},
-		{"", ""},
-	}
-	for _, tc := range cases {
-		if got := crewTagOwner(tc.in); got != tc.want {
-			t.Fatalf("crewTagOwner(%q)=%q want %q", tc.in, got, tc.want)
+func TestPondTagOwnerTruncatesAndNormalizes(t *testing.T) {
+	// R4 fix: owner segment is a deterministic base32(sha256) hash when the
+	// normalized identity exceeds the tag-length budget, not a left-truncate.
+	// We assert (a) short owners pass through verbatim, (b) over-budget owners
+	// produce a stable lowercase alphanumeric segment of the configured
+	// length, and (c) two distinct identities never collide (the truncation
+	// failure mode the hash specifically replaces).
+	t.Run("short owner passes through", func(t *testing.T) {
+		if got := pondTagOwner("a@b"); got != "a" {
+			t.Fatalf("pondTagOwner short=%q want a", got)
 		}
+	})
+	t.Run("empty owner empty out", func(t *testing.T) {
+		for _, in := range []string{"", "!!"} {
+			if got := pondTagOwner(in); got != "" {
+				t.Fatalf("pondTagOwner(%q)=%q want empty", in, got)
+			}
+		}
+	})
+	t.Run("over-budget owner is stable hash, fixed length, lowercase alphanumeric", func(t *testing.T) {
+		got := pondTagOwner("yossi.eliaz@incredibuild.com")
+		if len(got) != maxPondTailscaleTagOwnerLength {
+			t.Fatalf("pondTagOwner length=%d want %d", len(got), maxPondTailscaleTagOwnerLength)
+		}
+		for _, ch := range got {
+			if !(('a' <= ch && ch <= 'z') || ('0' <= ch && ch <= '9')) {
+				t.Fatalf("pondTagOwner=%q has non-alphanumeric byte %q", got, ch)
+			}
+		}
+		// Determinism: repeated calls produce the same segment.
+		if again := pondTagOwner("yossi.eliaz@incredibuild.com"); again != got {
+			t.Fatalf("pondTagOwner not deterministic: %q vs %q", got, again)
+		}
+	})
+	t.Run("distinct identities never collide (the truncation regression)", func(t *testing.T) {
+		a := pondTagOwner("yossi.eliaz@incredibuild.com")
+		b := pondTagOwner("yossi.elman@incredibuild.com")
+		if a == b {
+			t.Fatalf("two distinct identities produced the same owner segment %q — truncation regression", a)
+		}
+	})
+}
+
+func TestPondTailscaleTagShape(t *testing.T) {
+	tag := pondTailscaleTag("yossi.eliaz@incredibuild.com", "Alpha Pond")
+	if !strings.HasPrefix(tag, "tag:cbx-pond-") || !strings.HasSuffix(tag, "-alpha-pond") {
+		t.Fatalf("pondTailscaleTag=%q want shape tag:cbx-pond-<owner>-alpha-pond", tag)
+	}
+	if got := pondTailscaleTag("", "alpha"); got != "tag:cbx-pond-user-alpha" {
+		t.Fatalf("pondTailscaleTag empty owner=%q want tag:cbx-pond-user-alpha", got)
+	}
+	if got := pondTailscaleTag("yossi", ""); got != "" {
+		t.Fatalf("pondTailscaleTag empty pond=%q want empty", got)
 	}
 }
 
-func TestCrewTailscaleTagShape(t *testing.T) {
-	if got := crewTailscaleTag("yossi.eliaz@incredibuild.com", "Alpha Pond"); got != "tag:cbx-pond-yossi-e-alpha-pond" {
-		t.Fatalf("crewTailscaleTag=%q want tag:cbx-pond-yossi-e-alpha-pond", got)
-	}
-	if got := crewTailscaleTag("", "alpha"); got != "tag:cbx-pond-user-alpha" {
-		t.Fatalf("crewTailscaleTag empty owner=%q want tag:cbx-pond-user-alpha", got)
-	}
-	if got := crewTailscaleTag("yossi", ""); got != "" {
-		t.Fatalf("crewTailscaleTag empty pond=%q want empty", got)
-	}
-}
-
-func TestAppendCrewTailscaleTag(t *testing.T) {
+func TestAppendPondTailscaleTag(t *testing.T) {
 	cfg := Config{
 		Pond: "alpha",
 		Tailscale: TailscaleConfig{
@@ -244,7 +270,7 @@ func TestAppendCrewTailscaleTag(t *testing.T) {
 			Tags:    []string{"tag:crabbox"},
 		},
 	}
-	appendCrewTailscaleTag(&cfg, true)
+	appendPondTailscaleTag(&cfg, true)
 	found := false
 	for _, tag := range cfg.Tailscale.Tags {
 		if strings.HasPrefix(tag, "tag:cbx-pond-") && strings.HasSuffix(tag, "-alpha") {
@@ -256,25 +282,25 @@ func TestAppendCrewTailscaleTag(t *testing.T) {
 	}
 	// Idempotent: a second call must not duplicate the entry.
 	before := len(cfg.Tailscale.Tags)
-	appendCrewTailscaleTag(&cfg, true)
+	appendPondTailscaleTag(&cfg, true)
 	if len(cfg.Tailscale.Tags) != before {
-		t.Fatalf("appendCrewTailscaleTag duplicated entry; got %#v", cfg.Tailscale.Tags)
+		t.Fatalf("appendPondTailscaleTag duplicated entry; got %#v", cfg.Tailscale.Tags)
 	}
 	// No-op when Tailscale is not enabled.
 	cfg2 := Config{Pond: "alpha", Tailscale: TailscaleConfig{Tags: []string{"tag:crabbox"}}}
-	appendCrewTailscaleTag(&cfg2, true)
+	appendPondTailscaleTag(&cfg2, true)
 	if len(cfg2.Tailscale.Tags) != 1 {
 		t.Fatalf("expected no-op when Tailscale disabled, got %#v", cfg2.Tailscale.Tags)
 	}
 	// No-op when the provider does not advertise FeatureTailscale.
 	cfg3 := Config{Pond: "alpha", Tailscale: TailscaleConfig{Enabled: true, Tags: []string{"tag:crabbox"}}}
-	appendCrewTailscaleTag(&cfg3, false)
+	appendPondTailscaleTag(&cfg3, false)
 	if len(cfg3.Tailscale.Tags) != 1 {
 		t.Fatalf("expected no-op when provider lacks FeatureTailscale, got %#v", cfg3.Tailscale.Tags)
 	}
 }
 
-func TestApplyLeaseCreateFlagsAddsCrewTailscaleTag(t *testing.T) {
+func TestApplyLeaseCreateFlagsAddsPondTailscaleTag(t *testing.T) {
 	defaults := Config{
 		Provider:    "hetzner",
 		Profile:     "default",
@@ -301,18 +327,18 @@ func TestApplyLeaseCreateFlagsAddsCrewTailscaleTag(t *testing.T) {
 	if !cfg.Tailscale.Enabled {
 		t.Fatalf("expected Tailscale enabled by --tailscale")
 	}
-	hasCrewTag := false
+	hasPondTag := false
 	for _, tag := range cfg.Tailscale.Tags {
 		if strings.HasPrefix(tag, "tag:cbx-pond-") && strings.HasSuffix(tag, "-alpha") {
-			hasCrewTag = true
+			hasPondTag = true
 		}
 	}
-	if !hasCrewTag {
+	if !hasPondTag {
 		t.Fatalf("expected pond Tailscale tag on cfg, got %#v", cfg.Tailscale.Tags)
 	}
 }
 
-func TestCloudInitCrewHostsBootstrapEmittedWhenCrewAndTailscale(t *testing.T) {
+func TestCloudInitPondHostsBootstrapEmittedWhenPondAndTailscale(t *testing.T) {
 	cfg := baseConfig()
 	cfg.SSHUser = "runner"
 	cfg.Pond = "alpha"
@@ -340,7 +366,7 @@ func TestCloudInitCrewHostsBootstrapEmittedWhenCrewAndTailscale(t *testing.T) {
 	}
 }
 
-func TestCloudInitCrewHostsBootstrapAbsentWithoutCrew(t *testing.T) {
+func TestCloudInitPondHostsBootstrapAbsentWithoutPond(t *testing.T) {
 	cfg := baseConfig()
 	cfg.Tailscale.Enabled = true
 	cfg.Tailscale.AuthKey = "tskey-secret"
@@ -350,7 +376,7 @@ func TestCloudInitCrewHostsBootstrapAbsentWithoutCrew(t *testing.T) {
 	}
 }
 
-func TestCloudInitCrewHostsBootstrapAbsentWithoutTailscale(t *testing.T) {
+func TestCloudInitPondHostsBootstrapAbsentWithoutTailscale(t *testing.T) {
 	cfg := baseConfig()
 	cfg.Pond = "alpha"
 	got := cloudInit(cfg, "ssh-ed25519 test")
@@ -359,7 +385,7 @@ func TestCloudInitCrewHostsBootstrapAbsentWithoutTailscale(t *testing.T) {
 	}
 }
 
-// stubDoctorTailscaleACLClient lets unit tests exercise doctorCrewSummary
+// stubDoctorTailscaleACLClient lets unit tests exercise doctorPondSummary
 // without touching the real Tailscale API.
 type stubDoctorTailscaleACLClient struct {
 	policy string
@@ -370,17 +396,17 @@ func (s stubDoctorTailscaleACLClient) PolicyHuJSON(_ context.Context, _ string) 
 	return s.policy, s.err
 }
 
-func TestDoctorCrewSummaryNoopsWithoutCrew(t *testing.T) {
+func TestDoctorPondSummaryNoopsWithoutPond(t *testing.T) {
 	cfg := Config{Provider: "hetzner"}
-	status, message, details := doctorCrewSummary(context.Background(), cfg)
+	status, message, details := doctorPondSummary(context.Background(), cfg)
 	if status != "" || message != "" || details != nil {
 		t.Fatalf("expected no pond check without cfg.Pond, got status=%q msg=%q details=%#v", status, message, details)
 	}
 }
 
-func TestDoctorCrewSummarySkipsNonTailscaleProviderWithCrew(t *testing.T) {
+func TestDoctorPondSummarySkipsNonTailscaleProviderWithPond(t *testing.T) {
 	cfg := Config{Provider: "e2b", Pond: "alpha"}
-	status, message, details := doctorCrewSummary(context.Background(), cfg)
+	status, message, details := doctorPondSummary(context.Background(), cfg)
 	if status != "skip" {
 		t.Fatalf("expected skip, got %q", status)
 	}
@@ -393,10 +419,10 @@ func TestDoctorCrewSummarySkipsNonTailscaleProviderWithCrew(t *testing.T) {
 	}
 }
 
-func TestDoctorCrewSummarySkipsWhenAPIKeyMissing(t *testing.T) {
+func TestDoctorPondSummarySkipsWhenAPIKeyMissing(t *testing.T) {
 	t.Setenv("TS_API_KEY", "")
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
-	status, _, details := doctorCrewSummary(context.Background(), cfg)
+	status, _, details := doctorPondSummary(context.Background(), cfg)
 	if status != "skip" {
 		t.Fatalf("expected skip when TS_API_KEY is missing, got %q", status)
 	}
@@ -405,21 +431,21 @@ func TestDoctorCrewSummarySkipsWhenAPIKeyMissing(t *testing.T) {
 	}
 }
 
-func TestDoctorCrewSummaryOKWhenACLPresent(t *testing.T) {
+func TestDoctorPondSummaryOKWhenACLPresent(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
-	tag := crewTailscaleTag(localCoordinatorOwner(), "alpha")
-	policy := crewPolicyFixture(tag)
+	tag := pondTailscaleTag(localCoordinatorOwner(), "alpha")
+	policy := pondPolicyFixture(tag)
 	prev := doctorTailscaleACLClientFactory
 	defer func() { doctorTailscaleACLClientFactory = prev }()
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
 		return stubDoctorTailscaleACLClient{policy: policy}
 	}
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
-	status, message, details := doctorCrewSummary(context.Background(), cfg)
+	status, message, details := doctorPondSummary(context.Background(), cfg)
 	if status != "ok" {
 		t.Fatalf("expected ok, got %q (msg=%q details=%#v)", status, message, details)
 	}
-	wantTag := crewTailscaleTag(localCoordinatorOwner(), "alpha")
+	wantTag := pondTailscaleTag(localCoordinatorOwner(), "alpha")
 	want := fmt.Sprintf(`pond "alpha": Tailscale plane auto-managed (%s)`, wantTag)
 	if message != want {
 		t.Fatalf("verdict text drifted\n want: %q\n got:  %q", want, message)
@@ -429,20 +455,20 @@ func TestDoctorCrewSummaryOKWhenACLPresent(t *testing.T) {
 	}
 }
 
-func TestDoctorCrewSummaryFailsWhenACLMissing(t *testing.T) {
+func TestDoctorPondSummaryFailsWhenACLMissing(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
-	policy := crewPolicyFixture("tag:cbx-pond-user-bravo")
+	policy := pondPolicyFixture("tag:cbx-pond-user-bravo")
 	prev := doctorTailscaleACLClientFactory
 	defer func() { doctorTailscaleACLClientFactory = prev }()
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
 		return stubDoctorTailscaleACLClient{policy: policy}
 	}
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
-	status, message, details := doctorCrewSummary(context.Background(), cfg)
+	status, message, details := doctorPondSummary(context.Background(), cfg)
 	if status != "failed" {
 		t.Fatalf("expected failed, got %q", status)
 	}
-	wantTag := crewTailscaleTag(localCoordinatorOwner(), "alpha")
+	wantTag := pondTailscaleTag(localCoordinatorOwner(), "alpha")
 	want := fmt.Sprintf(`pond "alpha": tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/pond.md`, wantTag)
 	if message != want {
 		t.Fatalf("verdict text drifted\n want: %q\n got:  %q", want, message)
@@ -452,7 +478,7 @@ func TestDoctorCrewSummaryFailsWhenACLMissing(t *testing.T) {
 	}
 }
 
-func TestDoctorCrewSummaryFailsWhenAPIClientErrors(t *testing.T) {
+func TestDoctorPondSummaryFailsWhenAPIClientErrors(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
 	prev := doctorTailscaleACLClientFactory
 	defer func() { doctorTailscaleACLClientFactory = prev }()
@@ -460,7 +486,7 @@ func TestDoctorCrewSummaryFailsWhenAPIClientErrors(t *testing.T) {
 		return stubDoctorTailscaleACLClient{err: fmt.Errorf("tailscale api 401: invalid api key")}
 	}
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
-	status, message, _ := doctorCrewSummary(context.Background(), cfg)
+	status, message, _ := doctorPondSummary(context.Background(), cfg)
 	if status != "failed" {
 		t.Fatalf("expected failed, got %q", status)
 	}
@@ -469,21 +495,21 @@ func TestDoctorCrewSummaryFailsWhenAPIClientErrors(t *testing.T) {
 	}
 }
 
-// TestDoctorCrewSummarySkipsWhenControlPlaneIncompatible covers self-hosted
+// TestDoctorPondSummarySkipsWhenControlPlaneIncompatible covers self-hosted
 // control planes (e.g. Headscale) whose policy endpoint is not byte-compatible
 // with Tailscale's /api/v2/tailnet/.../acl shape. Doctor must skip with a
 // helpful pointer at the manual snippet rather than reporting a failure.
-func TestDoctorCrewSummarySkipsWhenControlPlaneIncompatible(t *testing.T) {
+func TestDoctorPondSummarySkipsWhenControlPlaneIncompatible(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
 	t.Setenv("CRABBOX_TS_API_URL", "https://headscale.example.com")
 	t.Setenv("TS_API_URL", "")
 	prev := doctorTailscaleACLClientFactory
 	defer func() { doctorTailscaleACLClientFactory = prev }()
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
-		return stubDoctorTailscaleACLClient{err: fmt.Errorf("%w: GET https://headscale.example.com/api/v2/tailnet/-/acl returned 404", ErrCrewACLAutoBootstrapUnavailable)}
+		return stubDoctorTailscaleACLClient{err: fmt.Errorf("%w: GET https://headscale.example.com/api/v2/tailnet/-/acl returned 404", ErrPondACLAutoBootstrapUnavailable)}
 	}
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
-	status, message, details := doctorCrewSummary(context.Background(), cfg)
+	status, message, details := doctorPondSummary(context.Background(), cfg)
 	if status != "skip" {
 		t.Fatalf("expected skip on incompatible control plane, got %q (msg=%q)", status, message)
 	}
@@ -501,21 +527,21 @@ func TestDoctorCrewSummarySkipsWhenControlPlaneIncompatible(t *testing.T) {
 	}
 }
 
-func TestCrewACLRowPresentChecksConcreteTag(t *testing.T) {
+func TestPondACLRowPresentChecksConcreteTag(t *testing.T) {
 	tag := "tag:cbx-pond-yossi-e-alpha"
 	cases := []struct {
 		name string
 		body string
 		want bool
 	}{
-		{"both present", crewPolicyFixture(tag), true},
-		{"grants present", crewGrantPolicyFixture(tag), true},
+		{"both present", pondPolicyFixture(tag), true},
+		{"grants present", pondGrantPolicyFixture(tag), true},
 		{"commented sample before grants", `{
   // "tagOwners": { "tag:cbx-pond-yossi-e-alpha": ["autogroup:admin"] },
   "tagOwners": { "tag:cbx-pond-yossi-e-alpha": ["autogroup:admin"] },
   "grants": [{ "src": ["tag:cbx-pond-yossi-e-alpha"], "dst": ["tag:cbx-pond-yossi-e-alpha"], "ip": ["*"] }]
 }`, true},
-		{"different pond", crewPolicyFixture("tag:cbx-pond-yossi-e-bravo"), false},
+		{"different pond", pondPolicyFixture("tag:cbx-pond-yossi-e-bravo"), false},
 		{"missing tagOwners", `{"acls":[{"src":["tag:cbx-pond-yossi-e-alpha"],"dst":["tag:cbx-pond-yossi-e-alpha:*"]}]}`, false},
 		{"missing dst", `{"tagOwners":{"tag:cbx-pond-yossi-e-alpha":["autogroup:admin"]},"acls":[{"src":["tag:cbx-pond-yossi-e-alpha"],"dst":["tag:crabbox:*"]}]}`, false},
 		{"grant src only", `{"tagOwners":{"tag:cbx-pond-yossi-e-alpha":["autogroup:admin"]},"grants":[{"src":["tag:cbx-pond-yossi-e-alpha"],"dst":["tag:crabbox"],"ip":["*"]}]}`, false},
@@ -524,21 +550,21 @@ func TestCrewACLRowPresentChecksConcreteTag(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := crewACLRowPresent(tc.body, tag); got != tc.want {
-				t.Fatalf("crewACLRowPresent(%q)=%v want %v", tc.name, got, tc.want)
+			if got := pondACLRowPresent(tc.body, tag); got != tc.want {
+				t.Fatalf("pondACLRowPresent(%q)=%v want %v", tc.name, got, tc.want)
 			}
 		})
 	}
 }
 
-func crewPolicyFixture(tag string) string {
+func pondPolicyFixture(tag string) string {
 	return fmt.Sprintf(`{
   "tagOwners": { %q: ["autogroup:admin"] },
   "acls": [{ "action": "accept", "src": [%q], "dst": [%q] }]
 }`, tag, tag, tag+":*")
 }
 
-func crewGrantPolicyFixture(tag string) string {
+func pondGrantPolicyFixture(tag string) string {
 	return fmt.Sprintf(`{
   "tagOwners": { %q: ["autogroup:admin"] },
   "grants": [{ "src": [%q], "dst": [%q], "ip": ["*"] }]

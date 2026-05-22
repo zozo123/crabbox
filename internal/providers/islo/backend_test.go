@@ -188,7 +188,7 @@ func TestIsloCreateSandboxPassesRelativeWorkdirToProvider(t *testing.T) {
 	}
 }
 
-func TestIsloCreateSandboxStoresCrewClaimForList(t *testing.T) {
+func TestIsloCreateSandboxStoresPondClaimForList(t *testing.T) {
 	t.Setenv("XDG_STATE_HOME", t.TempDir())
 	client := &fakeIsloSyncClient{createName: "crabbox-repo-abcdef"}
 	backend := &isloBackend{

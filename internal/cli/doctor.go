@@ -51,11 +51,11 @@ func (a App) doctor(ctx context.Context, args []string) error {
 		return err
 	}
 	if flagWasSet(fs, "pond") {
-		crewName, err := requestedCrewName(*pond)
+		pondName, err := requestedPondName(*pond)
 		if err != nil {
 			return err
 		}
-		cfg.Pond = crewName
+		cfg.Pond = pondName
 	}
 	ok := true
 	var checks []doctorJSONCheck
@@ -75,7 +75,7 @@ func (a App) doctor(ctx context.Context, args []string) error {
 		fmt.Fprintf(a.Stdout, "%-7s %-8s %s\n", status, check, message)
 	}
 	finish := func() error {
-		if status, message, details := doctorCrewSummary(ctx, cfg); status != "" {
+		if status, message, details := doctorPondSummary(ctx, cfg); status != "" {
 			if status == "failed" {
 				ok = false
 			}
@@ -87,8 +87,8 @@ func (a App) doctor(ctx context.Context, args []string) error {
 		// when they pass `--pond`, so the matrix text is also written to
 		// stdout in non-JSON mode so it shows up alongside the per-check
 		// status lines.
-		if pond := normalizeCrewName(cfg.Pond); pond != "" {
-			matrix, rendered, err := doctorCrewReachabilitySummary(pond)
+		if pond := normalizePondName(cfg.Pond); pond != "" {
+			matrix, rendered, err := doctorPondReachabilitySummary(pond)
 			if err != nil {
 				return err
 			}

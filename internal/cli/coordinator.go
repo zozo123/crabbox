@@ -54,6 +54,7 @@ type CoordinatorLease struct {
 	Share                *CoordinatorShare     `json:"share,omitempty"`
 	Profile              string                `json:"profile"`
 	Class                string                `json:"class"`
+	Pond                 string                `json:"pond,omitempty"`
 	ServerType           string                `json:"serverType"`
 	RequestedServerType  string                `json:"requestedServerType,omitempty"`
 	HostID               string                `json:"hostId,omitempty"`
@@ -1625,6 +1626,12 @@ func leaseToServerTarget(lease CoordinatorLease, cfg Config) (Server, SSHTarget,
 			"last_touched_at":   lease.LastTouchedAt,
 			"idle_timeout_secs": fmt.Sprint(lease.IdleTimeoutSeconds),
 		},
+	}
+	// Pond label propagation (Codex P1, pool.go:75). Without this, `list --pond`
+	// would silently drop coordinator-backed leases (the fallback path that
+	// runs when the operator has no admin token to read the machine view).
+	if pond := normalizePondName(lease.Pond); pond != "" {
+		server.Labels[pondLabelKey] = pond
 	}
 	if lease.Tailscale != nil {
 		applyTailscaleMetadataToServer(&server, *lease.Tailscale)

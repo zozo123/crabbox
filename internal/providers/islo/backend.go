@@ -354,7 +354,7 @@ func (b *isloBackend) createSandbox(ctx context.Context, client isloAPI, repo Re
 		_ = client.DeleteSandbox(context.Background(), sandbox.GetName())
 		return "", "", "", err
 	}
-	if err := claimLeaseForRepoProviderWithCrew(leaseID, slug, isloProvider, b.cfg.Pond, repo.Root, b.cfg.IdleTimeout, reclaim); err != nil {
+	if err := claimLeaseForRepoProviderWithPond(leaseID, slug, isloProvider, b.cfg.Pond, repo.Root, b.cfg.IdleTimeout, reclaim); err != nil {
 		_ = client.DeleteSandbox(context.Background(), sandbox.GetName())
 		return "", "", "", err
 	}

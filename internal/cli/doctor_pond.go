@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-// doctorCrewTimeout bounds the live Tailscale API call. Kept short so the
+// doctorPondTimeout bounds the live Tailscale API call. Kept short so the
 // doctor command stays responsive even when the user's tailnet is degraded.
-const doctorCrewTimeout = 4 * time.Second
+const doctorPondTimeout = 4 * time.Second
 
 // doctorTailscaleACLClient is satisfied by anything that can return the raw
 // policy document for the user's tailnet. The real implementation hits the
@@ -27,17 +27,17 @@ type doctorTailscaleACLClient interface {
 // the live client is not available so the check can degrade gracefully.
 var doctorTailscaleACLClientFactory = newDoctorTailscaleACLClient
 
-// doctorCrewSummary is the doctor entry point invoked from finish(). It
+// doctorPondSummary is the doctor entry point invoked from finish(). It
 // always returns either ("","",nil) — meaning "no pond check applies" — or a
 // triplet ready to feed into the existing record(...) helper. The check is
 // intentionally bounded to a few seconds so doctor stays fast even on
 // degraded tailnets.
-func doctorCrewSummary(ctx context.Context, cfg Config) (string, string, map[string]string) {
-	pond := normalizeCrewName(cfg.Pond)
+func doctorPondSummary(ctx context.Context, cfg Config) (string, string, map[string]string) {
+	pond := normalizePondName(cfg.Pond)
 	if pond == "" {
 		return "", "", nil
 	}
-	tag := crewTailscaleTag(localCoordinatorOwner(), pond)
+	tag := pondTailscaleTag(localCoordinatorOwner(), pond)
 	if tag == "" {
 		return "", "", nil
 	}
@@ -56,7 +56,7 @@ func doctorCrewSummary(ctx context.Context, cfg Config) (string, string, map[str
 	if client == nil {
 		return "skip", "tailscale api client unavailable", map[string]string{"pond": pond, "tag": tag, "reason": "client_unavailable"}
 	}
-	checkCtx, cancel := context.WithTimeout(ctx, doctorCrewTimeout)
+	checkCtx, cancel := context.WithTimeout(ctx, doctorPondTimeout)
 	defer cancel()
 	body, err := client.PolicyHuJSON(checkCtx, tailnet)
 	if err != nil {
@@ -65,38 +65,115 @@ func doctorCrewSummary(ctx context.Context, cfg Config) (string, string, map[str
 		// message pointing operators at the manual snippet rather than
 		// failing — the network plane still works against the client-side
 		// Tailscale binary regardless of which control plane runs it.
-		if errors.Is(err, ErrCrewACLAutoBootstrapUnavailable) {
+		if errors.Is(err, ErrPondACLAutoBootstrapUnavailable) {
 			return "skip", fmt.Sprintf("pond %q: control plane at %s does not expose a Tailscale-compatible policy API; apply the snippet from docs/features/pond.md (e.g. Headscale: `headscale policy set --file ./policy.hujson`)", pond, resolveTailnetAPIURL()), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "api_url": resolveTailnetAPIURL(), "reason": "control_plane_incompatible"}
 		}
 		return "failed", fmt.Sprintf("tailscale policy lookup failed: %v", err), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "error": err.Error()}
 	}
-	if crewACLRowPresent(body, tag) {
+	if pondACLRowPresent(body, tag) {
 		return "ok", fmt.Sprintf("pond %q: Tailscale plane auto-managed (%s)", pond, tag), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "mode": "auto-managed"}
 	}
-	return "failed", fmt.Sprintf("pond %q: tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/pond.md", pond, tag), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "remedy": "see_docs_features_crew_md"}
+	return "failed", fmt.Sprintf("pond %q: tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/pond.md", pond, tag), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "remedy": "see_docs_features_pond_md"}
 }
 
-// crewACLRowPresent checks for the concrete tag declaration and access row
+// pondACLRowPresent checks for the concrete tag declaration and access row
 // needed by a pond. The Tailscale policy file is HuJSON and not trivially
 // JSON-parseable without an extra dependency, so keep the scan textual but
 // exact enough: the tag must appear under tagOwners and either a legacy ACL row
 // (`tag` -> `tag:*`) or a grants row (`tag` -> `tag`) must be present.
-func crewACLRowPresent(policy, tag string) bool {
+func pondACLRowPresent(policy, tag string) bool {
 	tag = strings.TrimSpace(tag)
 	if tag == "" {
 		return false
 	}
 	quotedTag := `"` + tag + `"`
-	quotedDst := `"` + tag + `:*"`
 	if !policySectionContains(policy, "tagOwners", quotedTag) {
 		return false
 	}
-	if policySectionContains(policy, "acls", quotedTag) &&
-		policySectionContains(policy, "acls", quotedDst) {
+	// Structural per-rule check (Codex P1, doctor_pond.go:95/100).
+	// The earlier substring-based check matched the tag anywhere in the
+	// acls/grants section — so a tag appearing as `src` in one rule and `dst`
+	// in another would falsely satisfy the check. Parse each section into
+	// rule objects and require a SINGLE rule that has the tag on both src and
+	// dst (and a non-empty ip list for grants).
+	if acls, ok := policySection(policy, "acls"); ok && pondACLSelfPeerRule(acls, tag) {
 		return true
 	}
-	if grants, ok := policySection(policy, "grants"); ok {
-		return strings.Count(grants, quotedTag) >= 2 && strings.Contains(grants, `"ip"`)
+	if grants, ok := policySection(policy, "grants"); ok && pondGrantSelfPeerRule(grants, tag) {
+		return true
+	}
+	return false
+}
+
+// pondACLSelfPeerRule scans the acls section (raw section text) for a rule
+// where the tag appears both in src and dst. Uses JSON unmarshal so the check
+// is structural rather than substring; section text is already brace-balanced
+// by policySection so plain json.Unmarshal works for spec-compliant policies.
+// HuJSON policies with comments will fail to parse here; the caller treats
+// that as "not present" and falls back to the manual snippet.
+func pondACLSelfPeerRule(section, tag string) bool {
+	var rules []struct {
+		Src []string `json:"src"`
+		Dst []string `json:"dst"`
+	}
+	if err := json.Unmarshal([]byte(section), &rules); err != nil {
+		return false
+	}
+	for _, r := range rules {
+		srcHit := false
+		dstHit := false
+		for _, s := range r.Src {
+			if s == tag {
+				srcHit = true
+				break
+			}
+		}
+		for _, d := range r.Dst {
+			if d == tag || d == tag+":*" {
+				dstHit = true
+				break
+			}
+		}
+		if srcHit && dstHit {
+			return true
+		}
+	}
+	return false
+}
+
+// pondGrantSelfPeerRule is the modern grants-shape counterpart of
+// pondACLSelfPeerRule. Requires src AND dst AND a non-empty ip list, all in
+// the same single rule.
+func pondGrantSelfPeerRule(section, tag string) bool {
+	var rules []struct {
+		Src []string `json:"src"`
+		Dst []string `json:"dst"`
+		IP  []string `json:"ip"`
+	}
+	if err := json.Unmarshal([]byte(section), &rules); err != nil {
+		return false
+	}
+	for _, r := range rules {
+		if len(r.IP) == 0 {
+			continue
+		}
+		srcHit := false
+		dstHit := false
+		for _, s := range r.Src {
+			if s == tag {
+				srcHit = true
+				break
+			}
+		}
+		for _, d := range r.Dst {
+			if d == tag {
+				dstHit = true
+				break
+			}
+		}
+		if srcHit && dstHit {
+			return true
+		}
 	}
 	return false
 }
@@ -194,7 +271,7 @@ func newDoctorTailscaleACLClient(apiKey string) doctorTailscaleACLClient {
 	if apiKey == "" {
 		return nil
 	}
-	return &liveDoctorTailscaleACLClient{apiKey: apiKey, http: &http.Client{Timeout: doctorCrewTimeout}}
+	return &liveDoctorTailscaleACLClient{apiKey: apiKey, http: &http.Client{Timeout: doctorPondTimeout}}
 }
 
 func (c *liveDoctorTailscaleACLClient) PolicyHuJSON(ctx context.Context, tailnet string) (string, error) {
@@ -218,7 +295,7 @@ func (c *liveDoctorTailscaleACLClient) PolicyHuJSON(ctx context.Context, tailnet
 		return "", readErr
 	}
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusNotImplemented {
-		return "", fmt.Errorf("%w: GET %s returned %d", ErrCrewACLAutoBootstrapUnavailable, url, resp.StatusCode)
+		return "", fmt.Errorf("%w: GET %s returned %d", ErrPondACLAutoBootstrapUnavailable, url, resp.StatusCode)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// Return body as error detail when the response is a JSON error

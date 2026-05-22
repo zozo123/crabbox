@@ -19,7 +19,7 @@ type leaseClaim struct {
 	// provider-label index so `crabbox list --pond <name>` works; delegated
 	// providers (islo, e2b, modal, ...) do not own a label store, so the local
 	// claim sidecar is the source of truth for those backends and for the
-	// pond bridge plane (see internal/cli/crew_bridge.go).
+	// pond bridge plane (see internal/cli/pond_bridge.go).
 	Pond               string `json:"pond,omitempty"`
 	RepoRoot           string `json:"repoRoot"`
 	ClaimedAt          string `json:"claimedAt"`
@@ -62,22 +62,22 @@ func claimLeaseForRepoConfig(leaseID, slug string, cfg Config, repoRoot string, 
 }
 
 func claimLeaseForRepoProvider(leaseID, slug, provider, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
-	return claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, "", "", repoRoot, idleTimeout, reclaim)
+	return claimLeaseForRepoProviderScopePond(leaseID, slug, provider, "", "", repoRoot, idleTimeout, reclaim)
 }
 
 func claimLeaseForRepoProviderScope(leaseID, slug, provider, providerScope, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
-	return claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, providerScope, "", repoRoot, idleTimeout, reclaim)
+	return claimLeaseForRepoProviderScopePond(leaseID, slug, provider, providerScope, "", repoRoot, idleTimeout, reclaim)
 }
 
-func claimLeaseForRepoProviderWithCrew(leaseID, slug, provider, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
-	return claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, "", pond, repoRoot, idleTimeout, reclaim)
+func claimLeaseForRepoProviderWithPond(leaseID, slug, provider, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
+	return claimLeaseForRepoProviderScopePond(leaseID, slug, provider, "", pond, repoRoot, idleTimeout, reclaim)
 }
 
-// claimLeaseForRepoProviderScopeCrew is the pond-aware variant. It is used by
+// claimLeaseForRepoProviderScopePond is the pond-aware variant. It is used by
 // delegated providers (islo and the next ones to come online for the bridge
 // plane) so the pond name is durable in the local claim sidecar even when the
 // provider does not own a label store of its own.
-func claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, providerScope, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
+func claimLeaseForRepoProviderScopePond(leaseID, slug, provider, providerScope, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
 	if leaseID == "" || repoRoot == "" {
 		return nil
 	}
@@ -104,7 +104,7 @@ func claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, providerScope, 
 	if providerScope != "" {
 		existing.ProviderScope = providerScope
 	}
-	if pond = normalizeCrewName(pond); pond != "" {
+	if pond = normalizePondName(pond); pond != "" {
 		existing.Pond = pond
 	}
 	existing.RepoRoot = repoRoot

@@ -84,10 +84,10 @@ type BridgeProvider interface {
 	ListPeerTargets(ctx context.Context, leaseID string) ([]BridgePeerTarget, error)
 }
 
-// crewPeersFlags holds the parsed flags for `crabbox pond peers`. It is
+// pondPeersFlags holds the parsed flags for `crabbox pond peers`. It is
 // extracted so the command can be unit tested without touching the global
 // flag set.
-type crewPeersFlags struct {
+type pondPeersFlags struct {
 	Pond      string
 	Provider  string
 	JSON      bool
@@ -97,22 +97,22 @@ type crewPeersFlags struct {
 
 func (a App) pond(ctx context.Context, args []string) error {
 	if len(args) == 0 {
-		a.crewHelp()
+		a.pondHelp()
 		return exit(2, "missing pond subcommand")
 	}
 	switch args[0] {
 	case "peers":
-		return a.crewPeers(ctx, args[1:])
+		return a.pondPeers(ctx, args[1:])
 	case "-h", "--help", "help":
-		a.crewHelp()
+		a.pondHelp()
 		return nil
 	default:
-		a.crewHelp()
+		a.pondHelp()
 		return exit(2, "unknown pond subcommand %q", args[0])
 	}
 }
 
-func (a App) crewHelp() {
+func (a App) pondHelp() {
 	fmt.Fprintln(a.Stdout, `Pond bridge plane — list peer endpoints for delegated providers.
 
 Usage:
@@ -140,9 +140,9 @@ arbitrary TCP/UDP. Providers that do not expose a per-sandbox HTTPS ingress
 of pretending to bridge.`)
 }
 
-func (a App) crewPeers(ctx context.Context, args []string) error {
+func (a App) pondPeers(ctx context.Context, args []string) error {
 	fs := newFlagSet("pond peers", a.Stderr)
-	flags := crewPeersFlags{ShareTTL: 24 * time.Hour}
+	flags := pondPeersFlags{ShareTTL: 24 * time.Hour}
 	fs.StringVar(&flags.Pond, "pond", "", "pond label to resolve (required)")
 	fs.StringVar(&flags.Provider, "provider", "", "restrict to a single provider (default: all delegated providers in the pond)")
 	fs.BoolVar(&flags.JSON, "json", false, "emit machine-readable JSON")
@@ -151,11 +151,11 @@ func (a App) crewPeers(ctx context.Context, args []string) error {
 	if err := parseFlags(fs, args); err != nil {
 		return err
 	}
-	crewName, err := requestedCrewName(flags.Pond)
+	pondName, err := requestedPondName(flags.Pond)
 	if err != nil {
 		return err
 	}
-	if crewName == "" {
+	if pondName == "" {
 		return exit(2, "--pond is required")
 	}
 	if flags.SharePort != 0 && (flags.SharePort < 1 || flags.SharePort > 65535) {
@@ -166,25 +166,25 @@ func (a App) crewPeers(ctx context.Context, args []string) error {
 	// preserves the original single-provider semantics so existing scripts
 	// (and the islo live-demo in PR #136) keep working unchanged.
 	provider := strings.TrimSpace(flags.Provider)
-	peers, err := resolveCrewPeers(ctx, runtimeForApp(a), crewName, provider, flags)
+	peers, err := resolvePondPeers(ctx, runtimeForApp(a), pondName, provider, flags)
 	if err != nil {
 		return err
 	}
 	if flags.JSON {
-		return json.NewEncoder(a.Stdout).Encode(crewPeersJSON{Members: peers})
+		return json.NewEncoder(a.Stdout).Encode(pondPeersJSON{Members: peers})
 	}
 	renderBridgePeers(a.Stdout, peers)
 	return nil
 }
 
-// crewPeersJSON wraps the peer list so the JSON output matches the
+// pondPeersJSON wraps the peer list so the JSON output matches the
 // documented `{ "members": [...] }` shape. Callers that need a raw slice
 // can decode either form — the wrapper carries no other fields.
-type crewPeersJSON struct {
+type pondPeersJSON struct {
 	Members []BridgePeer `json:"members"`
 }
 
-// resolveCrewPeers builds the BridgePeer list for a pond. The resolver is
+// resolvePondPeers builds the BridgePeer list for a pond. The resolver is
 // split out so unit tests can swap in fakes for the provider backend and the
 // claim store without going through the full kong/flag stack.
 //
@@ -195,12 +195,12 @@ type crewPeersJSON struct {
 // results — this is the path that gives `crabbox pond peers --pond <name>`
 // honest cross-provider output without making the caller enumerate providers
 // by hand.
-func resolveCrewPeers(ctx context.Context, rt Runtime, pond, provider string, flags crewPeersFlags) ([]BridgePeer, error) {
+func resolvePondPeers(ctx context.Context, rt Runtime, pond, provider string, flags pondPeersFlags) ([]BridgePeer, error) {
 	claims, err := listLeaseClaims()
 	if err != nil {
 		return nil, err
 	}
-	matches := filterClaimsForCrew(claims, pond, provider)
+	matches := filterClaimsForPond(claims, pond, provider)
 	if len(matches) == 0 {
 		return []BridgePeer{}, nil
 	}
@@ -218,7 +218,7 @@ func resolveCrewPeers(ctx context.Context, rt Runtime, pond, provider string, fl
 	sort.Strings(order)
 	peers := make([]BridgePeer, 0, len(matches))
 	for _, p := range order {
-		providerPeers, err := resolveCrewPeersForProvider(ctx, rt, p, byProvider[p], flags)
+		providerPeers, err := resolvePondPeersForProvider(ctx, rt, p, byProvider[p], flags)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func resolveCrewPeers(ctx context.Context, rt Runtime, pond, provider string, fl
 	return peers, nil
 }
 
-// resolveCrewPeersForProvider configures one provider backend and fans the
+// resolvePondPeersForProvider configures one provider backend and fans the
 // per-provider claim list through it. The caller is responsible for stitching
 // the per-provider slices together into the final, slug-sorted view returned
 // to the user.
@@ -253,7 +253,7 @@ func resolveCrewPeers(ctx context.Context, rt Runtime, pond, provider string, fl
 //     behavior (publish/list/honest-unsupported).
 //   - none — Blacksmith and providers with no Crabbox bridge adapter.
 //     Surfaced with a documented note so doctor stays honest.
-func resolveCrewPeersForProvider(ctx context.Context, rt Runtime, provider string, claims []leaseClaim, flags crewPeersFlags) ([]BridgePeer, error) {
+func resolvePondPeersForProvider(ctx context.Context, rt Runtime, provider string, claims []leaseClaim, flags pondPeersFlags) ([]BridgePeer, error) {
 	class := providerTransportClass(provider)
 	peers := make([]BridgePeer, 0, len(claims))
 	var bridge BridgeProvider
@@ -402,18 +402,18 @@ func cloneStringMap(in map[string]string) map[string]string {
 	return out
 }
 
-// filterClaimsForCrew returns the subset of claims that belong to the named
+// filterClaimsForPond returns the subset of claims that belong to the named
 // pond and (when provider is non-empty) the named provider. Empty pond
-// returns no matches — crews are never implicit.
-func filterClaimsForCrew(claims []leaseClaim, pond, provider string) []leaseClaim {
-	pond = normalizeCrewName(pond)
+// returns no matches — ponds are never implicit.
+func filterClaimsForPond(claims []leaseClaim, pond, provider string) []leaseClaim {
+	pond = normalizePondName(pond)
 	if pond == "" {
 		return nil
 	}
 	provider = strings.TrimSpace(provider)
 	out := make([]leaseClaim, 0, len(claims))
 	for _, claim := range claims {
-		if normalizeCrewName(claim.Pond) != pond {
+		if normalizePondName(claim.Pond) != pond {
 			continue
 		}
 		if provider != "" && claim.Provider != provider {
@@ -424,7 +424,7 @@ func filterClaimsForCrew(claims []leaseClaim, pond, provider string) []leaseClai
 	return out
 }
 
-// loadBridgeProviderFunc is the factory used by resolveCrewPeers; it is a
+// loadBridgeProviderFunc is the factory used by resolvePondPeers; it is a
 // package var so unit tests can inject a fake bridge without going through
 // provider registration. Production code lets it default to the real lookup.
 var loadBridgeProviderFunc = realLoadBridgeProvider
@@ -475,7 +475,7 @@ func renderBridgePeers(w interface{ Write([]byte) (int, error) }, peers []Bridge
 		return
 	}
 	for _, peer := range peers {
-		fmt.Fprintf(w, "%s\tlease=%s\tprovider=%s\tcrew=%s\ttransport=%s", peer.Slug, peer.LeaseID, peer.Provider, peer.Pond, peer.Transport)
+		fmt.Fprintf(w, "%s\tlease=%s\tprovider=%s\tpond=%s\ttransport=%s", peer.Slug, peer.LeaseID, peer.Provider, peer.Pond, peer.Transport)
 		if peer.Endpoint != "" {
 			fmt.Fprintf(w, "\tendpoint=%s", peer.Endpoint)
 		}

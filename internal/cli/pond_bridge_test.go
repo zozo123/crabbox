@@ -12,28 +12,28 @@ import (
 	"time"
 )
 
-func TestFilterClaimsForCrew(t *testing.T) {
+func TestFilterClaimsForPond(t *testing.T) {
 	claims := []leaseClaim{
 		{LeaseID: "isb_1", Slug: "web", Provider: "islo", Pond: "alpha"},
 		{LeaseID: "isb_2", Slug: "client", Provider: "islo", Pond: "Alpha"},
 		{LeaseID: "cbx_3", Slug: "db", Provider: "hetzner", Pond: "alpha"},
 		{LeaseID: "isb_4", Slug: "other", Provider: "islo", Pond: "bravo"},
-		{LeaseID: "isb_5", Slug: "noCrew", Provider: "islo"},
+		{LeaseID: "isb_5", Slug: "noPond", Provider: "islo"},
 	}
-	out := filterClaimsForCrew(claims, "alpha", "islo")
+	out := filterClaimsForPond(claims, "alpha", "islo")
 	if len(out) != 2 {
 		t.Fatalf("expected 2 islo+alpha claims, got %d: %#v", len(out), out)
 	}
 	if out[0].LeaseID != "isb_1" || out[1].LeaseID != "isb_2" {
 		t.Fatalf("unexpected order: %#v", out)
 	}
-	if all := filterClaimsForCrew(claims, "alpha", ""); len(all) != 3 {
+	if all := filterClaimsForPond(claims, "alpha", ""); len(all) != 3 {
 		t.Fatalf("expected 3 alpha claims across providers, got %d", len(all))
 	}
-	if empty := filterClaimsForCrew(claims, "", "islo"); len(empty) != 0 {
+	if empty := filterClaimsForPond(claims, "", "islo"); len(empty) != 0 {
 		t.Fatalf("expected 0 claims for empty pond, got %d", len(empty))
 	}
-	if none := filterClaimsForCrew(claims, "charlie", "islo"); len(none) != 0 {
+	if none := filterClaimsForPond(claims, "charlie", "islo"); len(none) != 0 {
 		t.Fatalf("expected 0 matches for pond=charlie, got %d", len(none))
 	}
 }
@@ -69,13 +69,13 @@ func withTempClaims(t *testing.T, claims []leaseClaim) {
 	dir := t.TempDir()
 	t.Setenv("XDG_STATE_HOME", dir)
 	for _, claim := range claims {
-		if err := claimLeaseForRepoProviderScopeCrew(claim.LeaseID, claim.Slug, claim.Provider, claim.ProviderScope, claim.Pond, claim.RepoRoot, 30*time.Minute, false); err != nil {
+		if err := claimLeaseForRepoProviderScopePond(claim.LeaseID, claim.Slug, claim.Provider, claim.ProviderScope, claim.Pond, claim.RepoRoot, 30*time.Minute, false); err != nil {
 			t.Fatalf("seed claim %s: %v", claim.LeaseID, err)
 		}
 	}
 }
 
-func TestResolveCrewPeersListsTargets(t *testing.T) {
+func TestResolvePondPeersListsTargets(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "isb_web", Slug: "bridge-web", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
 		{LeaseID: "isb_client", Slug: "bridge-client", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
@@ -95,9 +95,9 @@ func TestResolveCrewPeersListsTargets(t *testing.T) {
 	}
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "islo", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "islo", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 2 {
 		t.Fatalf("expected 2 peers, got %d: %#v", len(peers), peers)
@@ -116,7 +116,7 @@ func TestResolveCrewPeersListsTargets(t *testing.T) {
 	}
 }
 
-func TestResolveCrewPeersPublishesShare(t *testing.T) {
+func TestResolvePondPeersPublishesShare(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "isb_w", Slug: "w", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -129,9 +129,9 @@ func TestResolveCrewPeersPublishesShare(t *testing.T) {
 	loadBridgeProviderFunc = func(string, Runtime) (BridgeProvider, error) { return fake, nil }
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "islo", crewPeersFlags{SharePort: 8080, ShareTTL: time.Hour})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "islo", pondPeersFlags{SharePort: 8080, ShareTTL: time.Hour})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 1 || len(peers[0].Targets) != 1 {
 		t.Fatalf("expected 1 peer with 1 target, got %#v", peers)
@@ -144,7 +144,7 @@ func TestResolveCrewPeersPublishesShare(t *testing.T) {
 	}
 }
 
-func TestResolveCrewPeersUnknownProvider(t *testing.T) {
+func TestResolvePondPeersUnknownProvider(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "isb_w", Slug: "w", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -153,9 +153,9 @@ func TestResolveCrewPeersUnknownProvider(t *testing.T) {
 		return nil, nil // backend exists but does not implement BridgeProvider
 	}
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "islo", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "islo", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 1 || len(peers[0].Targets) != 0 {
 		t.Fatalf("expected 1 peer with no targets, got %#v", peers)
@@ -165,7 +165,7 @@ func TestResolveCrewPeersUnknownProvider(t *testing.T) {
 	}
 }
 
-func TestResolveCrewPeersExplicitlyUnsupportedAdapter(t *testing.T) {
+func TestResolvePondPeersExplicitlyUnsupportedAdapter(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "cbx_modal", Slug: "fn", Provider: "modal", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -174,9 +174,9 @@ func TestResolveCrewPeersExplicitlyUnsupportedAdapter(t *testing.T) {
 	loadBridgeProviderFunc = func(string, Runtime) (BridgeProvider, error) { return fake, nil }
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "modal", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "modal", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 1 || peers[0].BridgeState != "unsupported" {
 		t.Fatalf("expected ErrBridgeNotImplemented to surface as BridgeState=unsupported, got %#v", peers)
@@ -186,7 +186,7 @@ func TestResolveCrewPeersExplicitlyUnsupportedAdapter(t *testing.T) {
 	}
 }
 
-func TestResolveCrewPeersExplicitlyUnsupportedPublish(t *testing.T) {
+func TestResolvePondPeersExplicitlyUnsupportedPublish(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "cbx_cf", Slug: "edge", Provider: "cloudflare", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -195,16 +195,16 @@ func TestResolveCrewPeersExplicitlyUnsupportedPublish(t *testing.T) {
 	loadBridgeProviderFunc = func(string, Runtime) (BridgeProvider, error) { return fake, nil }
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "cloudflare", crewPeersFlags{SharePort: 8080, ShareTTL: time.Hour})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "cloudflare", pondPeersFlags{SharePort: 8080, ShareTTL: time.Hour})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 1 || peers[0].BridgeState != "unsupported" {
 		t.Fatalf("expected publish unsupported to surface as BridgeState=unsupported, got %#v", peers)
 	}
 }
 
-func TestResolveCrewPeersMultiProviderFanOut(t *testing.T) {
+func TestResolvePondPeersMultiProviderFanOut(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "isb_islo1", Slug: "islo-a", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
 		{LeaseID: "cbx_e2b1", Slug: "e2b-a", Provider: "e2b", Pond: "demo", RepoRoot: "/r"},
@@ -212,7 +212,7 @@ func TestResolveCrewPeersMultiProviderFanOut(t *testing.T) {
 		{LeaseID: "isb_other", Slug: "noise", Provider: "islo", Pond: "other", RepoRoot: "/r"},
 	})
 	// Each provider key maps to a distinct adapter so we can assert that
-	// resolveCrewPeers picks the right backend per provider rather than
+	// resolvePondPeers picks the right backend per provider rather than
 	// applying one backend uniformly.
 	adapters := map[string]*fakeBridgeProvider{
 		"islo":  {listed: map[string][]BridgePeerTarget{"isb_islo1": {{Port: 80, URL: "https://islo-a.share.islo.dev"}}}},
@@ -230,9 +230,9 @@ func TestResolveCrewPeersMultiProviderFanOut(t *testing.T) {
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
 	// Empty provider triggers the fan-out path.
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 3 {
 		t.Fatalf("expected 3 peers across providers, got %d: %#v", len(peers), peers)
@@ -252,7 +252,7 @@ func TestResolveCrewPeersMultiProviderFanOut(t *testing.T) {
 	}
 }
 
-func TestResolveCrewPeersListError(t *testing.T) {
+func TestResolvePondPeersListError(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "isb_w", Slug: "w", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -260,12 +260,12 @@ func TestResolveCrewPeersListError(t *testing.T) {
 	prev := loadBridgeProviderFunc
 	loadBridgeProviderFunc = func(string, Runtime) (BridgeProvider, error) { return fake, nil }
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
-	if _, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "islo", crewPeersFlags{}); err == nil {
+	if _, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "islo", pondPeersFlags{}); err == nil {
 		t.Fatalf("expected ListPeerTargets error to surface")
 	}
 }
 
-func TestCrewPeersCommandRendersJSON(t *testing.T) {
+func TestPondPeersCommandRendersJSON(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "isb_w", Slug: "web", Provider: "islo", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -280,10 +280,10 @@ func TestCrewPeersCommandRendersJSON(t *testing.T) {
 
 	var out, errBuf strings.Builder
 	app := App{Stdout: &out, Stderr: &errBuf}
-	if err := app.crewPeers(context.Background(), []string{"--pond", "demo", "--json"}); err != nil {
-		t.Fatalf("crewPeers: %v", err)
+	if err := app.pondPeers(context.Background(), []string{"--pond", "demo", "--json"}); err != nil {
+		t.Fatalf("pondPeers: %v", err)
 	}
-	var payload crewPeersJSON
+	var payload pondPeersJSON
 	if err := json.Unmarshal([]byte(out.String()), &payload); err != nil {
 		t.Fatalf("decode json: %v (raw=%q)", err, out.String())
 	}
@@ -296,18 +296,18 @@ func TestCrewPeersCommandRendersJSON(t *testing.T) {
 	}
 }
 
-func TestCrewPeersCommandRequiresCrew(t *testing.T) {
+func TestPondPeersCommandRequiresPond(t *testing.T) {
 	var out, errBuf strings.Builder
 	app := App{Stdout: &out, Stderr: &errBuf}
-	if err := app.crewPeers(context.Background(), nil); err == nil {
+	if err := app.pondPeers(context.Background(), nil); err == nil {
 		t.Fatalf("expected error when --pond is missing")
 	}
 }
 
-func TestCrewPeersCommandRejectsBadPort(t *testing.T) {
+func TestPondPeersCommandRejectsBadPort(t *testing.T) {
 	var out, errBuf strings.Builder
 	app := App{Stdout: &out, Stderr: &errBuf}
-	if err := app.crewPeers(context.Background(), []string{"--pond", "demo", "--share-port", "70000"}); err == nil {
+	if err := app.pondPeers(context.Background(), []string{"--pond", "demo", "--share-port", "70000"}); err == nil {
 		t.Fatalf("expected error for out-of-range port")
 	}
 }
@@ -346,12 +346,12 @@ func TestProbeBridgePeersUnreachable(t *testing.T) {
 	}
 }
 
-// TestCrewPeersIncludesManagedLinuxWithTailnetTransport asserts that a
+// TestPondPeersIncludesManagedLinuxWithTailnetTransport asserts that a
 // managed-Linux peer with a recorded Tailscale IPv4 is surfaced into the
 // unified pond listing with transport=tailnet and the tailnet IP as the
 // endpoint — even when no delegated-provider bridge backend is configured
 // (the resolver should never consult a URL adapter for hetzner peers).
-func TestCrewPeersIncludesManagedLinuxWithTailnetTransport(t *testing.T) {
+func TestPondPeersIncludesManagedLinuxWithTailnetTransport(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "cbx_web", Slug: "web", Provider: "hetzner", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -363,9 +363,9 @@ func TestCrewPeersIncludesManagedLinuxWithTailnetTransport(t *testing.T) {
 	}
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if len(peers) != 1 {
 		t.Fatalf("expected 1 peer, got %d", len(peers))
@@ -378,10 +378,10 @@ func TestCrewPeersIncludesManagedLinuxWithTailnetTransport(t *testing.T) {
 	}
 }
 
-// TestCrewPeersIncludesSSHLeaseWithSSHTransport asserts that SSH-lease
+// TestPondPeersIncludesSSHLeaseWithSSHTransport asserts that SSH-lease
 // providers (RunPod here) surface their endpoint as `ssh://host:port` so
 // downstream tooling can dial it without provider-specific knowledge.
-func TestCrewPeersIncludesSSHLeaseWithSSHTransport(t *testing.T) {
+func TestPondPeersIncludesSSHLeaseWithSSHTransport(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "rp_db", Slug: "db", Provider: "runpod", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -396,9 +396,9 @@ func TestCrewPeersIncludesSSHLeaseWithSSHTransport(t *testing.T) {
 	}
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if peers[0].Transport != TransportSSH {
 		t.Fatalf("transport=%q want ssh", peers[0].Transport)
@@ -408,12 +408,12 @@ func TestCrewPeersIncludesSSHLeaseWithSSHTransport(t *testing.T) {
 	}
 }
 
-// TestCrewPeersHandlesPendingTailscaleIP covers the case where the lease
+// TestPondPeersHandlesPendingTailscaleIP covers the case where the lease
 // is tagged for a tailnet-capable provider but the IP has not been
 // recorded yet (race between provision and tailnet join). The peer should
 // be reported as transport=pending with an honest note rather than being
 // dropped or pretending the endpoint exists.
-func TestCrewPeersHandlesPendingTailscaleIP(t *testing.T) {
+func TestPondPeersHandlesPendingTailscaleIP(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "cbx_pend", Slug: "pend", Provider: "aws", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -421,9 +421,9 @@ func TestCrewPeersHandlesPendingTailscaleIP(t *testing.T) {
 	loadBridgeProviderFunc = func(string, Runtime) (BridgeProvider, error) { return nil, nil }
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if peers[0].Transport != TransportPending {
 		t.Fatalf("transport=%q want pending", peers[0].Transport)
@@ -436,11 +436,11 @@ func TestCrewPeersHandlesPendingTailscaleIP(t *testing.T) {
 	}
 }
 
-// TestCrewPeersHandlesBlacksmithAsNone asserts that Blacksmith — the
+// TestPondPeersHandlesBlacksmithAsNone asserts that Blacksmith — the
 // provider that owns its own connectivity outside Crabbox's planes — is
 // surfaced as transport=none with the exact note documented in the public
 // API so client tooling can detect it.
-func TestCrewPeersHandlesBlacksmithAsNone(t *testing.T) {
+func TestPondPeersHandlesBlacksmithAsNone(t *testing.T) {
 	withTempClaims(t, []leaseClaim{
 		{LeaseID: "bs_what", Slug: "what", Provider: "blacksmith", Pond: "demo", RepoRoot: "/r"},
 	})
@@ -448,9 +448,9 @@ func TestCrewPeersHandlesBlacksmithAsNone(t *testing.T) {
 	loadBridgeProviderFunc = func(string, Runtime) (BridgeProvider, error) { return nil, nil }
 	t.Cleanup(func() { loadBridgeProviderFunc = prev })
 
-	peers, err := resolveCrewPeers(context.Background(), Runtime{}, "demo", "", crewPeersFlags{})
+	peers, err := resolvePondPeers(context.Background(), Runtime{}, "demo", "", pondPeersFlags{})
 	if err != nil {
-		t.Fatalf("resolveCrewPeers: %v", err)
+		t.Fatalf("resolvePondPeers: %v", err)
 	}
 	if peers[0].Transport != TransportNone {
 		t.Fatalf("transport=%q want none", peers[0].Transport)
@@ -463,19 +463,19 @@ func TestCrewPeersHandlesBlacksmithAsNone(t *testing.T) {
 	}
 }
 
-// TestDoctorCrewReachabilityMatrixAsymmetric pins the asymmetry that
+// TestDoctorPondReachabilityMatrixAsymmetric pins the asymmetry that
 // `crabbox doctor --pond` reports between the transport planes. The
 // matrix must not pretend `url -> tailnet` is reachable, and it must
 // flag `* -> ssh` and `ssh -> *` as warnings (operator-side bridge
 // required) rather than ok.
-func TestDoctorCrewReachabilityMatrixAsymmetric(t *testing.T) {
+func TestDoctorPondReachabilityMatrixAsymmetric(t *testing.T) {
 	peers := []BridgePeer{
 		{Slug: "web", Provider: "hetzner", Transport: TransportTailnet, Endpoint: "100.64.1.3"},
 		{Slug: "api", Provider: "islo", Transport: TransportURL, Endpoint: "https://api.share.islo.dev"},
 		{Slug: "db", Provider: "runpod", Transport: TransportSSH, Endpoint: "ssh://1.2.3.4:22"},
 		{Slug: "what", Provider: "blacksmith", Transport: TransportNone, Note: "blacksmith owns connectivity"},
 	}
-	matrix := buildCrewReachabilityMatrix("alpha", peers)
+	matrix := buildPondReachabilityMatrix("alpha", peers)
 	if got, want := len(matrix.Transports), 4; got != want {
 		t.Fatalf("transports=%d want %d (%v)", got, want, matrix.Transports)
 	}
@@ -523,17 +523,17 @@ func TestDoctorCrewReachabilityMatrixAsymmetric(t *testing.T) {
 	}
 }
 
-// TestRenderCrewReachabilityMatrixIncludesAsymmetricNotes checks the
+// TestRenderPondReachabilityMatrixIncludesAsymmetricNotes checks the
 // human renderer surfaces the per-cell notes verbatim so reviewers can
 // audit the claims without parsing JSON.
-func TestRenderCrewReachabilityMatrixIncludesAsymmetricNotes(t *testing.T) {
+func TestRenderPondReachabilityMatrixIncludesAsymmetricNotes(t *testing.T) {
 	peers := []BridgePeer{
 		{Slug: "web", Provider: "hetzner", Transport: TransportTailnet, Endpoint: "100.64.1.3"},
 		{Slug: "api", Provider: "islo", Transport: TransportURL, Endpoint: "https://x"},
 	}
-	matrix := buildCrewReachabilityMatrix("alpha", peers)
+	matrix := buildPondReachabilityMatrix("alpha", peers)
 	var buf strings.Builder
-	renderCrewReachabilityMatrix(&buf, matrix)
+	renderPondReachabilityMatrix(&buf, matrix)
 	out := buf.String()
 	if !strings.Contains(out, "tailnet -> url") {
 		t.Fatalf("renderer should label rows by transport pair, got:\n%s", out)

@@ -57,7 +57,7 @@ func applyLeaseCreateFlagsForLease(cfg *Config, fs *flag.FlagSet, values leaseCr
 	cfg.Profile = *values.Profile
 	cfg.Class = *values.Class
 	if flagWasSet(fs, "pond") {
-		pond, err := requestedCrewName(*values.Pond)
+		pond, err := requestedPondName(*values.Pond)
 		if err != nil {
 			return err
 		}
@@ -96,21 +96,28 @@ func applyLeaseCreateFlagsForLease(cfg *Config, fs *flag.FlagSet, values leaseCr
 		return err
 	}
 	if cfg.Pond != "" {
-		appendCrewTailscaleTag(cfg, providerCapableOfTailscale(cfg.Provider))
-		if err := maybeBootstrapCrewACL(context.Background(), *cfg); err != nil {
-			return err
+		appendPondTailscaleTag(cfg, providerCapableOfTailscale(cfg.Provider))
+		// Only bootstrap ACL on lease *creation*. Reuse paths (run --id <existing>)
+		// already had their ACL row written when the lease was first claimed;
+		// re-running the bootstrap there just risks transient Tailscale 5xx
+		// blocking attach commands that mutate no ACL state (Codex P2,
+		// lease_flags.go:99).
+		if existingLeaseID == "" {
+			if err := maybeBootstrapPondACL(context.Background(), *cfg); err != nil {
+				return err
+			}
 		}
 	}
 	return validateLeaseDurations(*cfg)
 }
 
-// maybeBootstrapCrewACL self-bootstraps the pond tag's tagOwners + grants
+// maybeBootstrapPondACL self-bootstraps the pond tag's tagOwners + grants
 // rows on the operator tailnet when TS_API_KEY is exported. When the key is
 // absent, when the provider lacks Tailscale, or when the row is already
 // present, this is a silent no-op so doctor still owns the manual-snippet
 // fallback path. Failures from the live API are surfaced so the lease is
 // not created against a tailnet that cannot actually carry pond traffic.
-func maybeBootstrapCrewACL(ctx context.Context, cfg Config) error {
+func maybeBootstrapPondACL(ctx context.Context, cfg Config) error {
 	if cfg.Pond == "" || !cfg.Tailscale.Enabled {
 		return nil
 	}
@@ -121,17 +128,17 @@ func maybeBootstrapCrewACL(ctx context.Context, cfg Config) error {
 	if apiKey == "" {
 		return nil
 	}
-	client := crewTailnetACLClientFactory(apiKey)
+	client := pondTailnetACLClientFactory(apiKey)
 	if client == nil {
 		return nil
 	}
 	tailnet := strings.TrimSpace(os.Getenv("TS_TAILNET"))
 	owner := localCoordinatorOwner()
-	err := crewACLEnsure(ctx, client, tailnet, owner, cfg.Pond)
+	err := pondACLEnsure(ctx, client, tailnet, owner, cfg.Pond)
 	// A self-hosted control plane (e.g. Headscale) without a Tailscale-shaped
 	// policy API must not block lease creation. Doctor surfaces the same
 	// condition to the operator with the manual-snippet pointer.
-	if errors.Is(err, ErrCrewACLAutoBootstrapUnavailable) {
+	if errors.Is(err, ErrPondACLAutoBootstrapUnavailable) {
 		return nil
 	}
 	return err

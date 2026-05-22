@@ -13,10 +13,10 @@ import (
 	"testing"
 )
 
-// stubCrewTailnetACLClient lets unit tests exercise crewACLEnsure without
+// stubPondTailnetACLClient lets unit tests exercise pondACLEnsure without
 // touching the network. Each method records call counts and the last input
 // body so assertions can be made against the merge logic.
-type stubCrewTailnetACLClient struct {
+type stubPondTailnetACLClient struct {
 	policy   string
 	etag     string
 	getErr   error
@@ -27,26 +27,26 @@ type stubCrewTailnetACLClient struct {
 	lastEtag string
 }
 
-func (s *stubCrewTailnetACLClient) GetPolicy(_ context.Context, _ string) (string, string, error) {
+func (s *stubPondTailnetACLClient) GetPolicy(_ context.Context, _ string) (string, string, error) {
 	atomic.AddInt32(&s.gets, 1)
 	return s.policy, s.etag, s.getErr
 }
 
-func (s *stubCrewTailnetACLClient) PutPolicy(_ context.Context, _, body, etag string) error {
+func (s *stubPondTailnetACLClient) PutPolicy(_ context.Context, _, body, etag string) error {
 	atomic.AddInt32(&s.puts, 1)
 	s.lastBody = body
 	s.lastEtag = etag
 	return s.putErr
 }
 
-func TestCrewACLEnsureNoopWhenRowPresent(t *testing.T) {
-	tag := crewTailscaleTag("user", "alpha")
-	stub := &stubCrewTailnetACLClient{
-		policy: crewPolicyFixture(tag),
+func TestPondACLEnsureNoopWhenRowPresent(t *testing.T) {
+	tag := pondTailscaleTag("user", "alpha")
+	stub := &stubPondTailnetACLClient{
+		policy: pondPolicyFixture(tag),
 		etag:   `"v1"`,
 	}
-	if err := crewACLEnsure(context.Background(), stub, "-", "user", "alpha"); err != nil {
-		t.Fatalf("crewACLEnsure: %v", err)
+	if err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha"); err != nil {
+		t.Fatalf("pondACLEnsure: %v", err)
 	}
 	if atomic.LoadInt32(&stub.gets) != 1 {
 		t.Fatalf("expected 1 GET, got %d", stub.gets)
@@ -56,13 +56,13 @@ func TestCrewACLEnsureNoopWhenRowPresent(t *testing.T) {
 	}
 }
 
-func TestCrewACLEnsureUpsertsMissingRowAndPropagatesETag(t *testing.T) {
-	stub := &stubCrewTailnetACLClient{
+func TestPondACLEnsureUpsertsMissingRowAndPropagatesETag(t *testing.T) {
+	stub := &stubPondTailnetACLClient{
 		policy: `{"tagOwners":{"tag:crabbox":["autogroup:admin"]},"acls":[{"action":"accept","src":["*"],"dst":["*:*"]}]}`,
 		etag:   `"v7"`,
 	}
-	if err := crewACLEnsure(context.Background(), stub, "-", "user", "alpha"); err != nil {
-		t.Fatalf("crewACLEnsure: %v", err)
+	if err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha"); err != nil {
+		t.Fatalf("pondACLEnsure: %v", err)
 	}
 	if atomic.LoadInt32(&stub.puts) != 1 {
 		t.Fatalf("expected 1 PUT, got %d", stub.puts)
@@ -70,7 +70,7 @@ func TestCrewACLEnsureUpsertsMissingRowAndPropagatesETag(t *testing.T) {
 	if stub.lastEtag != `"v7"` {
 		t.Fatalf("expected If-Match etag to be propagated, got %q", stub.lastEtag)
 	}
-	wantTag := crewTailscaleTag("user", "alpha")
+	wantTag := pondTailscaleTag("user", "alpha")
 	if !strings.Contains(stub.lastBody, wantTag) {
 		t.Fatalf("expected new policy body to mention %q, got:\n%s", wantTag, stub.lastBody)
 	}
@@ -79,18 +79,18 @@ func TestCrewACLEnsureUpsertsMissingRowAndPropagatesETag(t *testing.T) {
 	if err := json.Unmarshal([]byte(stub.lastBody), &policy); err != nil {
 		t.Fatalf("merged policy is not valid JSON: %v\n%s", err, stub.lastBody)
 	}
-	if !crewACLRowPresent(stub.lastBody, wantTag) {
-		t.Fatalf("merged policy should pass crewACLRowPresent, got:\n%s", stub.lastBody)
+	if !pondACLRowPresent(stub.lastBody, wantTag) {
+		t.Fatalf("merged policy should pass pondACLRowPresent, got:\n%s", stub.lastBody)
 	}
 }
 
-func TestCrewACLEnsurePrefersGrantsWhenPolicyUsesGrants(t *testing.T) {
-	stub := &stubCrewTailnetACLClient{
+func TestPondACLEnsurePrefersGrantsWhenPolicyUsesGrants(t *testing.T) {
+	stub := &stubPondTailnetACLClient{
 		policy: `{"tagOwners":{"tag:crabbox":["autogroup:admin"]},"grants":[{"src":["tag:crabbox"],"dst":["tag:crabbox"],"ip":["*"]}]}`,
 		etag:   `"v1"`,
 	}
-	if err := crewACLEnsure(context.Background(), stub, "-", "user", "alpha"); err != nil {
-		t.Fatalf("crewACLEnsure: %v", err)
+	if err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha"); err != nil {
+		t.Fatalf("pondACLEnsure: %v", err)
 	}
 	if !strings.Contains(stub.lastBody, `"grants"`) {
 		t.Fatalf("expected grants stanza preserved, got:\n%s", stub.lastBody)
@@ -100,40 +100,55 @@ func TestCrewACLEnsurePrefersGrantsWhenPolicyUsesGrants(t *testing.T) {
 	}
 }
 
-func TestCrewACLEnsureETagMismatchReturnsClearError(t *testing.T) {
+func TestPondACLEnsureETagMismatchReturnsClearError(t *testing.T) {
 	// A persistent 412 from the server must surface a clear, actionable
 	// error after the retry budget is exhausted. The stub returns the
-	// sentinel so crewACLEnsure goes through the full retry loop.
-	stub := &stubCrewTailnetACLClient{
+	// sentinel so pondACLEnsure goes through the full retry loop.
+	stub := &stubPondTailnetACLClient{
 		policy: `{"tagOwners":{"tag:crabbox":["autogroup:admin"]}}`,
 		etag:   `"v1"`,
-		putErr: errCrewACLPreconditionFailed,
+		putErr: errPondACLPreconditionFailed,
 	}
-	err := crewACLEnsure(context.Background(), stub, "-", "user", "alpha")
+	err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha")
 	if err == nil {
 		t.Fatal("expected error on ETag mismatch")
 	}
 	if !strings.Contains(err.Error(), "ETag race persisted") {
 		t.Fatalf("expected ETag race persisted error after retry, got %v", err)
 	}
-	if !errors.Is(err, errCrewACLPreconditionFailed) {
+	if !errors.Is(err, errPondACLPreconditionFailed) {
 		t.Fatalf("expected wrapped sentinel, got %v", err)
 	}
 }
 
-func TestCrewACLEnsureRefusesMalformedPolicy(t *testing.T) {
-	// HuJSON line comments make the body non-JSON. We must refuse rather
-	// than overwrite the operator's policy.
-	stub := &stubCrewTailnetACLClient{
+func TestPondACLEnsureAcceptsHuJSONPolicy(t *testing.T) {
+	// R1 fix: real Tailscale policies are HuJSON (allow // comments and
+	// trailing commas). We must standardize and proceed, not refuse —
+	// otherwise the first pondACLEnsure against any real tailnet fails
+	// silently and peers join the tailnet without the ACL grant.
+	stub := &stubPondTailnetACLClient{
 		policy: `// my tailnet policy
 {
-  "tagOwners": { "tag:crabbox": ["autogroup:admin"] }
+  "tagOwners": { "tag:crabbox": ["autogroup:admin"], },
 }`,
 		etag: `"v1"`,
 	}
-	err := crewACLEnsure(context.Background(), stub, "-", "user", "alpha")
+	err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha")
+	if err != nil {
+		t.Fatalf("expected HuJSON to be accepted, got %v", err)
+	}
+}
+
+func TestPondACLEnsureRefusesTrulyMalformedPolicy(t *testing.T) {
+	// Genuinely malformed input (not JSON, not HuJSON) must still be
+	// refused so we never overwrite an operator's policy on garbage.
+	stub := &stubPondTailnetACLClient{
+		policy: `this is not json or hujson at all {{{`,
+		etag:   `"v1"`,
+	}
+	err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha")
 	if err == nil {
-		t.Fatal("expected error on non-JSON policy")
+		t.Fatal("expected error on truly malformed policy")
 	}
 	if !strings.Contains(err.Error(), "non-JSON") {
 		t.Fatalf("expected non-JSON error, got %v", err)
@@ -143,9 +158,9 @@ func TestCrewACLEnsureRefusesMalformedPolicy(t *testing.T) {
 	}
 }
 
-func TestCrewACLEnsurePropagatesGetError(t *testing.T) {
-	stub := &stubCrewTailnetACLClient{getErr: fmt.Errorf("tailscale api 401: invalid api key")}
-	err := crewACLEnsure(context.Background(), stub, "-", "user", "alpha")
+func TestPondACLEnsurePropagatesGetError(t *testing.T) {
+	stub := &stubPondTailnetACLClient{getErr: fmt.Errorf("tailscale api 401: invalid api key")}
+	err := pondACLEnsure(context.Background(), stub, "-", "user", "alpha")
 	if err == nil {
 		t.Fatal("expected error when GET fails")
 	}
@@ -154,11 +169,11 @@ func TestCrewACLEnsurePropagatesGetError(t *testing.T) {
 	}
 }
 
-// TestCrewACLEnsureLiveClientETagFlow uses an httptest server to validate the
+// TestPondACLEnsureLiveClientETagFlow uses an httptest server to validate the
 // production HTTP client's ETag handling end-to-end. It covers (a) ETag is
 // echoed from GET to PUT's If-Match header and (b) a 412 from the server is
 // surfaced as a clear error.
-func TestCrewACLEnsureLiveClientETagFlow(t *testing.T) {
+func TestPondACLEnsureLiveClientETagFlow(t *testing.T) {
 	t.Run("happy path threads ETag", func(t *testing.T) {
 		var lastIfMatch string
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -174,9 +189,9 @@ func TestCrewACLEnsureLiveClientETagFlow(t *testing.T) {
 			}
 		}))
 		defer srv.Close()
-		client := newCrewTailnetTestClient(t, srv.URL, "stub-key")
-		if err := crewACLEnsure(context.Background(), client, "-", "user", "alpha"); err != nil {
-			t.Fatalf("crewACLEnsure: %v", err)
+		client := newPondTailnetTestClient(t, srv.URL, "stub-key")
+		if err := pondACLEnsure(context.Background(), client, "-", "user", "alpha"); err != nil {
+			t.Fatalf("pondACLEnsure: %v", err)
 		}
 		if lastIfMatch != `"v42"` {
 			t.Fatalf("expected If-Match propagated, got %q", lastIfMatch)
@@ -194,8 +209,8 @@ func TestCrewACLEnsureLiveClientETagFlow(t *testing.T) {
 			}
 		}))
 		defer srv.Close()
-		client := newCrewTailnetTestClient(t, srv.URL, "stub-key")
-		err := crewACLEnsure(context.Background(), client, "-", "user", "alpha")
+		client := newPondTailnetTestClient(t, srv.URL, "stub-key")
+		err := pondACLEnsure(context.Background(), client, "-", "user", "alpha")
 		if err == nil {
 			t.Fatal("expected error on 412")
 		}
@@ -205,21 +220,21 @@ func TestCrewACLEnsureLiveClientETagFlow(t *testing.T) {
 	})
 }
 
-// newCrewTailnetTestClient returns a client wired against an httptest server.
+// newPondTailnetTestClient returns a client wired against an httptest server.
 // It mirrors the live client's request shape but rewrites the base URL so the
 // test stays hermetic.
-func newCrewTailnetTestClient(t *testing.T, baseURL, apiKey string) crewTailnetACLClient {
+func newPondTailnetTestClient(t *testing.T, baseURL, apiKey string) pondTailnetACLClient {
 	t.Helper()
-	return &testCrewTailnetClient{base: baseURL, apiKey: apiKey, http: http.DefaultClient}
+	return &testPondTailnetClient{base: baseURL, apiKey: apiKey, http: http.DefaultClient}
 }
 
-type testCrewTailnetClient struct {
+type testPondTailnetClient struct {
 	base   string
 	apiKey string
 	http   *http.Client
 }
 
-func (c *testCrewTailnetClient) GetPolicy(ctx context.Context, _ string) (string, string, error) {
+func (c *testPondTailnetClient) GetPolicy(ctx context.Context, _ string) (string, string, error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, c.base+"/api/v2/tailnet/-/acl", nil)
 	req.SetBasicAuth(c.apiKey, "")
 	resp, err := c.http.Do(req)
@@ -234,7 +249,7 @@ func (c *testCrewTailnetClient) GetPolicy(ctx context.Context, _ string) (string
 	return string(body), resp.Header.Get("ETag"), nil
 }
 
-func (c *testCrewTailnetClient) PutPolicy(ctx context.Context, _, body, etag string) error {
+func (c *testPondTailnetClient) PutPolicy(ctx context.Context, _, body, etag string) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, c.base+"/api/v2/tailnet/-/acl", strings.NewReader(body))
 	req.SetBasicAuth(c.apiKey, "")
 	req.Header.Set("Content-Type", "application/json")
@@ -247,7 +262,7 @@ func (c *testCrewTailnetClient) PutPolicy(ctx context.Context, _, body, etag str
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusPreconditionFailed {
-		return errCrewACLPreconditionFailed
+		return errPondACLPreconditionFailed
 	}
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("tailscale api %d", resp.StatusCode)
@@ -255,11 +270,11 @@ func (c *testCrewTailnetClient) PutPolicy(ctx context.Context, _, body, etag str
 	return nil
 }
 
-// TestCrewACLEnsureRetriesOnce412ThenSucceeds wires an httptest server that
-// rejects the first PUT with 412 and accepts the second. crewACLEnsure must
+// TestPondACLEnsureRetriesOnce412ThenSucceeds wires an httptest server that
+// rejects the first PUT with 412 and accepts the second. pondACLEnsure must
 // observe the ETag race, re-read the policy, and complete in two attempts
 // without bubbling the transient failure to the caller.
-func TestCrewACLEnsureRetriesOnce412ThenSucceeds(t *testing.T) {
+func TestPondACLEnsureRetriesOnce412ThenSucceeds(t *testing.T) {
 	var gets, puts int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -279,9 +294,9 @@ func TestCrewACLEnsureRetriesOnce412ThenSucceeds(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	client := newCrewTailnetTestClient(t, srv.URL, "stub-key")
-	if err := crewACLEnsure(context.Background(), client, "-", "user", "alpha"); err != nil {
-		t.Fatalf("crewACLEnsure: %v", err)
+	client := newPondTailnetTestClient(t, srv.URL, "stub-key")
+	if err := pondACLEnsure(context.Background(), client, "-", "user", "alpha"); err != nil {
+		t.Fatalf("pondACLEnsure: %v", err)
 	}
 	if atomic.LoadInt32(&gets) != 2 {
 		t.Fatalf("expected 2 GETs (initial + retry), got %d", gets)
@@ -291,11 +306,11 @@ func TestCrewACLEnsureRetriesOnce412ThenSucceeds(t *testing.T) {
 	}
 }
 
-// TestCrewACLEnsureSurfacesAfterPersistent412 ensures the retry budget is
+// TestPondACLEnsureSurfacesAfterPersistent412 ensures the retry budget is
 // bounded: a server that always returns 412 must not be hammered indefinitely.
-// The function should fail after exactly crewACLMaxAttempts PUTs with a
+// The function should fail after exactly pondACLMaxAttempts PUTs with a
 // clear, actionable error.
-func TestCrewACLEnsureSurfacesAfterPersistent412(t *testing.T) {
+func TestPondACLEnsureSurfacesAfterPersistent412(t *testing.T) {
 	var puts int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -308,39 +323,39 @@ func TestCrewACLEnsureSurfacesAfterPersistent412(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	client := newCrewTailnetTestClient(t, srv.URL, "stub-key")
-	err := crewACLEnsure(context.Background(), client, "-", "user", "alpha")
+	client := newPondTailnetTestClient(t, srv.URL, "stub-key")
+	err := pondACLEnsure(context.Background(), client, "-", "user", "alpha")
 	if err == nil {
 		t.Fatal("expected error after persistent 412")
 	}
 	if !strings.Contains(err.Error(), "ETag race persisted") {
 		t.Fatalf("expected ETag race persisted error, got %v", err)
 	}
-	if got := atomic.LoadInt32(&puts); got != int32(crewACLMaxAttempts) {
-		t.Fatalf("expected exactly %d PUTs, got %d", crewACLMaxAttempts, got)
+	if got := atomic.LoadInt32(&puts); got != int32(pondACLMaxAttempts) {
+		t.Fatalf("expected exactly %d PUTs, got %d", pondACLMaxAttempts, got)
 	}
 }
 
-func TestMaybeBootstrapCrewACLNoopWithoutAPIKey(t *testing.T) {
+func TestMaybeBootstrapPondACLNoopWithoutAPIKey(t *testing.T) {
 	t.Setenv("TS_API_KEY", "")
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
-	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
+	if err := maybeBootstrapPondACL(context.Background(), cfg); err != nil {
 		t.Fatalf("expected silent noop without TS_API_KEY, got %v", err)
 	}
 }
 
-func TestMaybeBootstrapCrewACLCallsFactoryWhenKeyPresent(t *testing.T) {
+func TestMaybeBootstrapPondACLCallsFactoryWhenKeyPresent(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
-	tag := crewTailscaleTag(localCoordinatorOwner(), "alpha")
-	stub := &stubCrewTailnetACLClient{policy: crewPolicyFixture(tag), etag: `"v1"`}
-	prev := crewTailnetACLClientFactory
-	defer func() { crewTailnetACLClientFactory = prev }()
-	crewTailnetACLClientFactory = func(_ string) crewTailnetACLClient { return stub }
+	tag := pondTailscaleTag(localCoordinatorOwner(), "alpha")
+	stub := &stubPondTailnetACLClient{policy: pondPolicyFixture(tag), etag: `"v1"`}
+	prev := pondTailnetACLClientFactory
+	defer func() { pondTailnetACLClientFactory = prev }()
+	pondTailnetACLClientFactory = func(_ string) pondTailnetACLClient { return stub }
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
-	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
-		t.Fatalf("maybeBootstrapCrewACL: %v", err)
+	if err := maybeBootstrapPondACL(context.Background(), cfg); err != nil {
+		t.Fatalf("maybeBootstrapPondACL: %v", err)
 	}
 	if atomic.LoadInt32(&stub.gets) != 1 {
 		t.Fatalf("expected 1 GET when key is set, got %d", stub.gets)
@@ -371,33 +386,33 @@ func TestResolveTailnetAPIURLCrabboxOverrideWins(t *testing.T) {
 	}
 }
 
-// TestCrewACLEnsureReturnsUnavailableOn404 wires the live client at an httptest
+// TestPondACLEnsureReturnsUnavailableOn404 wires the live client at an httptest
 // server that always replies 404 (the shape of a Headscale control plane,
 // which exposes /api/v1/policy instead of Tailscale's /api/v2/tailnet/.../acl
-// route). The live client must surface ErrCrewACLAutoBootstrapUnavailable so
+// route). The live client must surface ErrPondACLAutoBootstrapUnavailable so
 // the lease creation path falls back to the manual snippet without erroring.
-func TestCrewACLEnsureReturnsUnavailableOn404(t *testing.T) {
+func TestPondACLEnsureReturnsUnavailableOn404(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found", http.StatusNotFound)
 	}))
 	defer srv.Close()
 	t.Setenv("CRABBOX_TS_API_URL", srv.URL)
 	t.Setenv("TS_API_URL", "")
-	client := newCrewTailnetACLClient("stub-key")
+	client := newPondTailnetACLClient("stub-key")
 	if client == nil {
 		t.Fatal("expected live client when api key is non-empty")
 	}
-	err := crewACLEnsure(context.Background(), client, "-", "user", "alpha")
-	if !errors.Is(err, ErrCrewACLAutoBootstrapUnavailable) {
-		t.Fatalf("expected ErrCrewACLAutoBootstrapUnavailable on 404, got %v", err)
+	err := pondACLEnsure(context.Background(), client, "-", "user", "alpha")
+	if !errors.Is(err, ErrPondACLAutoBootstrapUnavailable) {
+		t.Fatalf("expected ErrPondACLAutoBootstrapUnavailable on 404, got %v", err)
 	}
 }
 
-// TestCrewACLEnsureReturnsUnavailableWhenMissingETag asserts that a 2xx
+// TestPondACLEnsureReturnsUnavailableWhenMissingETag asserts that a 2xx
 // response without an ETag header (the way Headscale's policy GET responds)
 // is treated as auto-bootstrap unavailable — we cannot safely PUT without
 // concurrent-edit protection.
-func TestCrewACLEnsureReturnsUnavailableWhenMissingETag(t *testing.T) {
+func TestPondACLEnsureReturnsUnavailableWhenMissingETag(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = io.WriteString(w, `{"tagOwners":{},"acls":[]}`)
@@ -405,44 +420,44 @@ func TestCrewACLEnsureReturnsUnavailableWhenMissingETag(t *testing.T) {
 	defer srv.Close()
 	t.Setenv("CRABBOX_TS_API_URL", srv.URL)
 	t.Setenv("TS_API_URL", "")
-	client := newCrewTailnetACLClient("stub-key")
+	client := newPondTailnetACLClient("stub-key")
 	if client == nil {
 		t.Fatal("expected live client when api key is non-empty")
 	}
-	err := crewACLEnsure(context.Background(), client, "-", "user", "alpha")
-	if !errors.Is(err, ErrCrewACLAutoBootstrapUnavailable) {
-		t.Fatalf("expected ErrCrewACLAutoBootstrapUnavailable when ETag missing, got %v", err)
+	err := pondACLEnsure(context.Background(), client, "-", "user", "alpha")
+	if !errors.Is(err, ErrPondACLAutoBootstrapUnavailable) {
+		t.Fatalf("expected ErrPondACLAutoBootstrapUnavailable when ETag missing, got %v", err)
 	}
 }
 
-// TestMaybeBootstrapCrewACLSilentlySkipsWhenControlPlaneUnavailable covers the
-// integration path: when crewACLEnsure surfaces ErrCrewACLAutoBootstrapUnavailable
+// TestMaybeBootstrapPondACLSilentlySkipsWhenControlPlaneUnavailable covers the
+// integration path: when pondACLEnsure surfaces ErrPondACLAutoBootstrapUnavailable
 // (e.g. against Headscale), the lease creation must not fail. Doctor surfaces
 // the same condition with a manual-snippet pointer.
-func TestMaybeBootstrapCrewACLSilentlySkipsWhenControlPlaneUnavailable(t *testing.T) {
+func TestMaybeBootstrapPondACLSilentlySkipsWhenControlPlaneUnavailable(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
-	prev := crewTailnetACLClientFactory
-	defer func() { crewTailnetACLClientFactory = prev }()
-	crewTailnetACLClientFactory = func(_ string) crewTailnetACLClient {
-		return &stubCrewTailnetACLClient{getErr: fmt.Errorf("%w: GET / returned 404", ErrCrewACLAutoBootstrapUnavailable)}
+	prev := pondTailnetACLClientFactory
+	defer func() { pondTailnetACLClientFactory = prev }()
+	pondTailnetACLClientFactory = func(_ string) pondTailnetACLClient {
+		return &stubPondTailnetACLClient{getErr: fmt.Errorf("%w: GET / returned 404", ErrPondACLAutoBootstrapUnavailable)}
 	}
 	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
-	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
+	if err := maybeBootstrapPondACL(context.Background(), cfg); err != nil {
 		t.Fatalf("expected silent skip on unavailable control plane, got %v", err)
 	}
 }
 
-func TestMaybeBootstrapCrewACLSkipsNonTailscaleProvider(t *testing.T) {
+func TestMaybeBootstrapPondACLSkipsNonTailscaleProvider(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
-	stub := &stubCrewTailnetACLClient{}
-	prev := crewTailnetACLClientFactory
-	defer func() { crewTailnetACLClientFactory = prev }()
-	crewTailnetACLClientFactory = func(_ string) crewTailnetACLClient { return stub }
+	stub := &stubPondTailnetACLClient{}
+	prev := pondTailnetACLClientFactory
+	defer func() { pondTailnetACLClientFactory = prev }()
+	pondTailnetACLClientFactory = func(_ string) pondTailnetACLClient { return stub }
 	cfg := Config{Provider: "e2b", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
-	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
-		t.Fatalf("maybeBootstrapCrewACL: %v", err)
+	if err := maybeBootstrapPondACL(context.Background(), cfg); err != nil {
+		t.Fatalf("maybeBootstrapPondACL: %v", err)
 	}
 	if atomic.LoadInt32(&stub.gets) != 0 {
 		t.Fatalf("expected no API call for non-Tailscale provider, got %d gets", stub.gets)

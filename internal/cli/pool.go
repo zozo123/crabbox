@@ -20,7 +20,7 @@ func (a App) list(ctx context.Context, args []string) error {
 	provider := fs.String("provider", defaults.Provider, providerHelpAll())
 	jsonOut := fs.Bool("json", false, "print JSON")
 	refresh := fs.Bool("refresh", false, "refresh provider-backed state where supported")
-	crewFilter := fs.String("pond", "", "only list leases tagged with this pond")
+	pondFilter := fs.String("pond", "", "only list leases tagged with this pond")
 	providerFlags := registerProviderFlags(fs, defaults)
 	targetFlags := registerTargetFlags(fs, defaults)
 	if err := parseFlags(fs, args); err != nil {
@@ -37,7 +37,7 @@ func (a App) list(ctx context.Context, args []string) error {
 	if err := applyTargetFlagOverrides(&cfg, fs, targetFlags); err != nil {
 		return err
 	}
-	crewName, err := requestedCrewName(*crewFilter)
+	pondName, err := requestedPondName(*pondFilter)
 	if err != nil {
 		return err
 	}
@@ -52,8 +52,8 @@ func (a App) list(ctx context.Context, args []string) error {
 				return err
 			}
 			a.syncExternalRunnersBestEffort(ctx, cfg, backend)
-			if crewName != "" {
-				view = filterJSONListViewByCrew(view, crewName)
+			if pondName != "" {
+				view = filterJSONListViewByPond(view, pondName)
 			}
 			return json.NewEncoder(a.Stdout).Encode(view)
 		}
@@ -71,8 +71,8 @@ func (a App) list(ctx context.Context, args []string) error {
 		return err
 	}
 	a.syncExternalRunnersBestEffort(ctx, cfg, backend)
-	if crewName != "" {
-		servers = filterServersByCrew(servers, crewName)
+	if pondName != "" {
+		servers = filterServersByPond(servers, pondName)
 	}
 	if *jsonOut {
 		return json.NewEncoder(a.Stdout).Encode(servers)
@@ -81,14 +81,27 @@ func (a App) list(ctx context.Context, args []string) error {
 	return nil
 }
 
-// filterJSONListViewByCrew filters a list-view payload (whatever shape the
+// filterJSONListViewByPond filters a list-view payload (whatever shape the
 // backend produces) by inspecting label-bearing entries. Backends that emit
 // shapes without labels are returned unchanged so JSON list output stays
 // authoritative for those providers.
-func filterJSONListViewByCrew(view any, pond string) any {
-	pond = normalizeCrewName(pond)
+func filterJSONListViewByPond(view any, pond string) any {
+	pond = normalizePondName(pond)
 	if pond == "" {
 		return view
+	}
+	// JSON round-trip so typed slices ([]CoordinatorMachine, []CoordinatorLease,
+	// etc. emitted by coordinator-backed ListJSON) become walkable []any without
+	// per-type reflection. Without this the type assertion below falls back to
+	// the unchanged view for every coordinator-backed provider, silently
+	// returning unfiltered results in `--json` mode (Codex P1, pool.go:95).
+	if _, ok := view.([]any); !ok {
+		if raw, err := json.Marshal(view); err == nil {
+			var normalized []any
+			if err := json.Unmarshal(raw, &normalized); err == nil {
+				view = normalized
+			}
+		}
 	}
 	entries, ok := view.([]any)
 	if !ok {
@@ -110,7 +123,7 @@ func filterJSONListViewByCrew(view any, pond string) any {
 		if labels == nil {
 			continue
 		}
-		if normalizeCrewName(labels[crewLabelKey]) == pond {
+		if normalizePondName(labels[pondLabelKey]) == pond {
 			kept = append(kept, entry)
 		}
 	}

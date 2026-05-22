@@ -54,7 +54,7 @@ type crabboxKongCLI struct {
 	Config     configKongCmd     `cmd:"" help:"Show or update user config."`
 	Pool       poolKongCmd       `cmd:"" help:"Alias commands for machine pools."`
 	Machine    machineKongCmd    `cmd:"" help:"Alias commands for direct-provider machines."`
-	Pond       crewKongCmd       `cmd:"" help:"Pond bridge plane: peer discovery for delegated providers."`
+	Pond       pondKongCmd       `cmd:"" help:"Pond bridge plane: peer discovery for delegated providers."`
 }
 
 type kongExit struct {
@@ -464,10 +464,10 @@ type machineCleanupKongCmd struct {
 	Args []string `arg:"" optional:""`
 }
 
-type crewKongCmd struct {
-	Peers crewPeersKongCmd `cmd:"" passthrough:"" help:"List peer endpoints for a pond on a delegated provider."`
+type pondKongCmd struct {
+	Peers pondPeersKongCmd `cmd:"" passthrough:"" help:"List peer endpoints for a pond on a delegated provider."`
 }
-type crewPeersKongCmd struct {
+type pondPeersKongCmd struct {
 	Args []string `arg:"" optional:""`
 }
 
@@ -677,8 +677,8 @@ func (c *machineCleanupKongCmd) Run(ctx context.Context, app App) error {
 	return app.cleanup(ctx, c.Args)
 }
 
-func (c *crewPeersKongCmd) Run(ctx context.Context, app App) error {
-	return app.crewPeers(ctx, stripKongCommandPath(c.Args, "pond", "peers"))
+func (c *pondPeersKongCmd) Run(ctx context.Context, app App) error {
+	return app.pondPeers(ctx, stripKongCommandPath(c.Args, "pond", "peers"))
 }
 
 func (c *versionKongCmd) Run(app App) error {
