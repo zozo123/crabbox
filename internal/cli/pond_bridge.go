@@ -135,7 +135,7 @@ Subcommands:
   peers   List every peer in the named pond, regardless of provider.
   release Stop every lease in the named pond and remove their claims.
 
-Flags for ` + "`pond peers`" + `:
+Flags for `+"`pond peers`"+`:
   --pond <name>          Required. Pond label to resolve.
   --provider <name>      Restrict to a single provider (default: all delegated
                          providers in the pond).
