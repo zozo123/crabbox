@@ -28,25 +28,25 @@ type doctorTailscaleACLClient interface {
 var doctorTailscaleACLClientFactory = newDoctorTailscaleACLClient
 
 // doctorCrewSummary is the doctor entry point invoked from finish(). It
-// always returns either ("","",nil) — meaning "no crew check applies" — or a
+// always returns either ("","",nil) — meaning "no pond check applies" — or a
 // triplet ready to feed into the existing record(...) helper. The check is
 // intentionally bounded to a few seconds so doctor stays fast even on
 // degraded tailnets.
 func doctorCrewSummary(ctx context.Context, cfg Config) (string, string, map[string]string) {
-	crew := normalizeCrewName(cfg.Crew)
-	if crew == "" {
+	pond := normalizeCrewName(cfg.Pond)
+	if pond == "" {
 		return "", "", nil
 	}
-	tag := crewTailscaleTag(localCoordinatorOwner(), crew)
+	tag := crewTailscaleTag(localCoordinatorOwner(), pond)
 	if tag == "" {
 		return "", "", nil
 	}
 	if !providerCapableOfTailscale(cfg.Provider) {
-		return "skip", fmt.Sprintf("crew %q: provider %s does not support the Tailscale plane; crew networking unavailable", crew, cfg.Provider), map[string]string{"provider": cfg.Provider, "crew": crew, "tag": tag, "plane": "tailscale", "reason": "provider_not_tailscale_capable"}
+		return "skip", fmt.Sprintf("pond %q: provider %s does not support the Tailscale plane; pond networking unavailable", pond, cfg.Provider), map[string]string{"provider": cfg.Provider, "pond": pond, "tag": tag, "plane": "tailscale", "reason": "provider_not_tailscale_capable"}
 	}
 	apiKey := strings.TrimSpace(os.Getenv("TS_API_KEY"))
 	if apiKey == "" {
-		return "skip", "TS_API_KEY missing; skipped ACL verification", map[string]string{"crew": crew, "tag": tag, "reason": "ts_api_key_missing"}
+		return "skip", "TS_API_KEY missing; skipped ACL verification", map[string]string{"pond": pond, "tag": tag, "reason": "ts_api_key_missing"}
 	}
 	tailnet := strings.TrimSpace(os.Getenv("TS_TAILNET"))
 	if tailnet == "" {
@@ -54,7 +54,7 @@ func doctorCrewSummary(ctx context.Context, cfg Config) (string, string, map[str
 	}
 	client := doctorTailscaleACLClientFactory(apiKey)
 	if client == nil {
-		return "skip", "tailscale api client unavailable", map[string]string{"crew": crew, "tag": tag, "reason": "client_unavailable"}
+		return "skip", "tailscale api client unavailable", map[string]string{"pond": pond, "tag": tag, "reason": "client_unavailable"}
 	}
 	checkCtx, cancel := context.WithTimeout(ctx, doctorCrewTimeout)
 	defer cancel()
@@ -66,18 +66,18 @@ func doctorCrewSummary(ctx context.Context, cfg Config) (string, string, map[str
 		// failing — the network plane still works against the client-side
 		// Tailscale binary regardless of which control plane runs it.
 		if errors.Is(err, ErrCrewACLAutoBootstrapUnavailable) {
-			return "skip", fmt.Sprintf("crew %q: control plane at %s does not expose a Tailscale-compatible policy API; apply the snippet from docs/features/crew.md (e.g. Headscale: `headscale policy set --file ./policy.hujson`)", crew, resolveTailnetAPIURL()), map[string]string{"crew": crew, "tag": tag, "tailnet": tailnet, "api_url": resolveTailnetAPIURL(), "reason": "control_plane_incompatible"}
+			return "skip", fmt.Sprintf("pond %q: control plane at %s does not expose a Tailscale-compatible policy API; apply the snippet from docs/features/pond.md (e.g. Headscale: `headscale policy set --file ./policy.hujson`)", pond, resolveTailnetAPIURL()), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "api_url": resolveTailnetAPIURL(), "reason": "control_plane_incompatible"}
 		}
-		return "failed", fmt.Sprintf("tailscale policy lookup failed: %v", err), map[string]string{"crew": crew, "tag": tag, "tailnet": tailnet, "error": err.Error()}
+		return "failed", fmt.Sprintf("tailscale policy lookup failed: %v", err), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "error": err.Error()}
 	}
 	if crewACLRowPresent(body, tag) {
-		return "ok", fmt.Sprintf("crew %q: Tailscale plane auto-managed (%s)", crew, tag), map[string]string{"crew": crew, "tag": tag, "tailnet": tailnet, "mode": "auto-managed"}
+		return "ok", fmt.Sprintf("pond %q: Tailscale plane auto-managed (%s)", pond, tag), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "mode": "auto-managed"}
 	}
-	return "failed", fmt.Sprintf("crew %q: tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/crew.md", crew, tag), map[string]string{"crew": crew, "tag": tag, "tailnet": tailnet, "remedy": "see_docs_features_crew_md"}
+	return "failed", fmt.Sprintf("pond %q: tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/pond.md", pond, tag), map[string]string{"pond": pond, "tag": tag, "tailnet": tailnet, "remedy": "see_docs_features_crew_md"}
 }
 
 // crewACLRowPresent checks for the concrete tag declaration and access row
-// needed by a crew. The Tailscale policy file is HuJSON and not trivially
+// needed by a pond. The Tailscale policy file is HuJSON and not trivially
 // JSON-parseable without an extra dependency, so keep the scan textual but
 // exact enough: the tag must appear under tagOwners and either a legacy ACL row
 // (`tag` -> `tag:*`) or a grants row (`tag` -> `tag`) must be present.

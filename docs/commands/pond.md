@@ -1,29 +1,29 @@
-# crew
+# pond
 
-`crabbox crew` is the cross-provider peer-discovery surface. A single
-invocation lists every member of the named crew with a transport hint
+`crabbox pond` is the cross-provider peer-discovery surface. A single
+invocation lists every member of the named pond with a transport hint
 (`tailnet` / `url` / `ssh` / `pending` / `none`) and a canonical endpoint, so
 callers can dial peers without knowing which provider each lease lives on.
-See `docs/features/crew.md` for the full design.
+See `docs/features/pond.md` for the full design.
 
 ```sh
-crabbox crew peers --crew alpha
-crabbox crew peers --crew alpha --json
-crabbox crew peers --crew alpha --provider islo --share-port 8080
-crabbox crew peers --crew alpha --share-port 8080 --share-ttl 1h --json
-crabbox doctor --crew alpha
+crabbox pond peers --pond alpha
+crabbox pond peers --pond alpha --json
+crabbox pond peers --pond alpha --provider islo --share-port 8080
+crabbox pond peers --pond alpha --share-port 8080 --share-ttl 1h --json
+crabbox doctor --pond alpha
 ```
 
-## `crew peers`
+## `pond peers`
 
-List every peer in the named crew, regardless of provider. When
+List every peer in the named pond, regardless of provider. When
 `--provider` is omitted the command fans out across every provider in
-the crew; passing it preserves the original single-provider semantics.
+the pond; passing it preserves the original single-provider semantics.
 
 | Flag             | Default | Description                                            |
 | ---------------- | ------- | ------------------------------------------------------ |
-| `--crew <name>`  | —       | Required. The crew label to resolve.                   |
-| `--provider`     | (all)   | Restrict to a single provider; defaults to every provider represented in the crew. |
+| `--pond <name>`  | —       | Required. The pond label to resolve.                   |
+| `--provider`     | (all)   | Restrict to a single provider; defaults to every provider represented in the pond. |
 | `--json`         | `false` | Emit machine-readable JSON instead of text.            |
 | `--share-port`   | `0`     | If non-zero, publish a public URL for that port on each URL-transport peer. The call is idempotent: an existing share is reused. |
 | `--share-ttl`    | `24h`   | TTL for shares created with `--share-port`. Islo clamps into the legal 60s..7d range. |
@@ -72,14 +72,14 @@ Peers on `unsupported` URL adapters still appear in the output with
 `BridgeState=unsupported` (JSON) / `bridge=unsupported` (text) so callers
 see the gap rather than mistaking it for "no shares published yet".
 
-## `doctor --crew`
+## `doctor --pond`
 
-`crabbox doctor --crew <name>` runs the Tailscale ACL row check (when the
-crew uses tailnet-capable providers) and, in the same invocation, prints
+`crabbox doctor --pond <name>` runs the Tailscale ACL row check (when the
+pond uses tailnet-capable providers) and, in the same invocation, prints
 the cross-provider reachability matrix:
 
 ```
-crew "alpha": 4 members
+pond "alpha": 4 members
   transport breakdown: none=1 ssh=1 tailnet=1 url=1
   reachability:
     tailnet -> tailnet : OK

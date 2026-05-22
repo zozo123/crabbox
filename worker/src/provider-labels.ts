@@ -35,8 +35,8 @@ export function leaseProviderLabels(
   if (config.target === "windows") {
     labels["windows_mode"] = config.windowsMode;
   }
-  if (config.crew) {
-    labels["crew"] = config.crew;
+  if (config.pond) {
+    labels["pond"] = config.pond;
   }
   if (config.desktop) {
     labels["desktop"] = "true";

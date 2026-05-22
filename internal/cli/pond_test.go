@@ -22,7 +22,7 @@ func TestNormalizeCrewName(t *testing.T) {
 		{"Alpha_Bravo Charlie", "alpha-bravo-charlie"},
 		{"---alpha---", "alpha"},
 		{"alpha//bravo??", "alpha-bravo"},
-		{"crew!!", "crew"},
+		{"pond!!", "pond"},
 		{"123-abc", "123-abc"},
 	}
 	for _, tc := range cases {
@@ -33,22 +33,22 @@ func TestNormalizeCrewName(t *testing.T) {
 }
 
 func TestRequestedCrewNameValidates(t *testing.T) {
-	got, err := requestedCrewName(" Alpha Crew ")
+	got, err := requestedCrewName(" Alpha Pond ")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != "alpha-crew" {
-		t.Fatalf("crew=%q want alpha-crew", got)
+	if got != "alpha-pond" {
+		t.Fatalf("pond=%q want alpha-pond", got)
 	}
 	if got, err := requestedCrewName(""); err != nil || got != "" {
 		t.Fatalf("empty input got=%q err=%v", got, err)
 	}
 	if _, err := requestedCrewName("!!"); err == nil {
-		t.Fatalf("expected error for crew with no alnum")
+		t.Fatalf("expected error for pond with no alnum")
 	}
 	tooLong := strings.Repeat("a", maxRequestedCrewNameLength+1)
 	if _, err := requestedCrewName(tooLong); err == nil {
-		t.Fatalf("expected error for crew %d chars", maxRequestedCrewNameLength+1)
+		t.Fatalf("expected error for pond %d chars", maxRequestedCrewNameLength+1)
 	}
 }
 
@@ -59,13 +59,13 @@ func TestDirectLeaseLabelsRecordCrew(t *testing.T) {
 		Profile:     "default",
 		ProviderKey: "crabbox-cbx-abcdef123456",
 		ServerType:  "cpx62",
-		Crew:        "alpha",
+		Pond:        "alpha",
 		TTL:         15 * time.Minute,
 		IdleTimeout: 4 * time.Minute,
 	}
 	labels := directLeaseLabels(cfg, "cbx_abcdef123456", "blue-lobster", "hetzner", "", true, now)
-	if labels["crew"] != "alpha" {
-		t.Fatalf("crew label=%q want alpha; full=%#v", labels["crew"], labels)
+	if labels["pond"] != "alpha" {
+		t.Fatalf("pond label=%q want alpha; full=%#v", labels["pond"], labels)
 	}
 }
 
@@ -80,21 +80,21 @@ func TestDirectLeaseLabelsOmitCrewWhenEmpty(t *testing.T) {
 		IdleTimeout: 4 * time.Minute,
 	}
 	labels := directLeaseLabels(cfg, "cbx_abcdef123456", "blue-lobster", "hetzner", "", true, now)
-	if _, ok := labels["crew"]; ok {
-		t.Fatalf("crew label should be omitted when cfg.Crew is empty; got %#v", labels)
+	if _, ok := labels["pond"]; ok {
+		t.Fatalf("pond label should be omitted when cfg.Pond is empty; got %#v", labels)
 	}
 }
 
 func TestFilterServersByCrew(t *testing.T) {
 	servers := []Server{
-		{Name: "a", Labels: map[string]string{"crew": "alpha"}},
-		{Name: "b", Labels: map[string]string{"crew": "bravo"}},
+		{Name: "a", Labels: map[string]string{"pond": "alpha"}},
+		{Name: "b", Labels: map[string]string{"pond": "bravo"}},
 		{Name: "c", Labels: map[string]string{}},
-		{Name: "d", Labels: map[string]string{"crew": "Alpha"}},
+		{Name: "d", Labels: map[string]string{"pond": "Alpha"}},
 	}
 	got := filterServersByCrew(servers, "alpha")
 	if len(got) != 2 {
-		t.Fatalf("expected 2 servers for crew=alpha, got %d (%#v)", len(got), got)
+		t.Fatalf("expected 2 servers for pond=alpha, got %d (%#v)", len(got), got)
 	}
 	if got[0].Name != "a" || got[1].Name != "d" {
 		t.Fatalf("filtered set unexpected: %#v", got)
@@ -103,7 +103,7 @@ func TestFilterServersByCrew(t *testing.T) {
 		t.Fatalf("empty filter should be a no-op, got %d", len(same))
 	}
 	if none := filterServersByCrew(servers, "charlie"); len(none) != 0 {
-		t.Fatalf("expected zero matches for crew=charlie, got %d", len(none))
+		t.Fatalf("expected zero matches for pond=charlie, got %d", len(none))
 	}
 }
 
@@ -120,19 +120,19 @@ func TestApplyLeaseCreateFlagsSetsCrew(t *testing.T) {
 	}
 	fs := flag.NewFlagSet("warmup", flag.ContinueOnError)
 	values := registerLeaseCreateFlags(fs, defaults)
-	if err := fs.Parse([]string{"--crew", "Alpha Crew"}); err != nil {
+	if err := fs.Parse([]string{"--pond", "Alpha Pond"}); err != nil {
 		t.Fatal(err)
 	}
 	cfg := defaults
 	if err := applyLeaseCreateFlags(&cfg, fs, values); err != nil {
 		t.Fatalf("applyLeaseCreateFlags: %v", err)
 	}
-	if cfg.Crew != "alpha-crew" {
-		t.Fatalf("cfg.Crew=%q want alpha-crew", cfg.Crew)
+	if cfg.Pond != "alpha-pond" {
+		t.Fatalf("cfg.Pond=%q want alpha-pond", cfg.Pond)
 	}
 	opts := leaseOptionsFromConfig(cfg)
-	if opts.Crew != "alpha-crew" {
-		t.Fatalf("leaseOptionsFromConfig.Crew=%q want alpha-crew", opts.Crew)
+	if opts.Pond != "alpha-pond" {
+		t.Fatalf("leaseOptionsFromConfig.Pond=%q want alpha-pond", opts.Pond)
 	}
 }
 
@@ -149,21 +149,21 @@ func TestApplyLeaseCreateFlagsRejectsBadCrew(t *testing.T) {
 	}
 	fs := flag.NewFlagSet("warmup", flag.ContinueOnError)
 	values := registerLeaseCreateFlags(fs, defaults)
-	if err := fs.Parse([]string{"--crew", "!!"}); err != nil {
+	if err := fs.Parse([]string{"--pond", "!!"}); err != nil {
 		t.Fatal(err)
 	}
 	cfg := defaults
 	if err := applyLeaseCreateFlags(&cfg, fs, values); err == nil {
-		t.Fatalf("expected error for invalid --crew")
+		t.Fatalf("expected error for invalid --pond")
 	}
 }
 
 func TestFilterJSONListViewByCrew(t *testing.T) {
 	view := []any{
-		map[string]any{"id": "a", "labels": map[string]any{"crew": "alpha"}},
-		map[string]any{"id": "b", "labels": map[string]any{"crew": "bravo"}},
+		map[string]any{"id": "a", "labels": map[string]any{"pond": "alpha"}},
+		map[string]any{"id": "b", "labels": map[string]any{"pond": "bravo"}},
 		map[string]any{"id": "c", "labels": map[string]any{}},
-		map[string]any{"id": "d", "labels": map[string]any{"crew": "Alpha"}},
+		map[string]any{"id": "d", "labels": map[string]any{"pond": "Alpha"}},
 		"not-a-map",
 	}
 	filtered := filterJSONListViewByCrew(view, "alpha")
@@ -225,20 +225,20 @@ func TestCrewTagOwnerTruncatesAndNormalizes(t *testing.T) {
 }
 
 func TestCrewTailscaleTagShape(t *testing.T) {
-	if got := crewTailscaleTag("yossi.eliaz@incredibuild.com", "Alpha Crew"); got != "tag:cbx-crew-yossi-e-alpha-crew" {
-		t.Fatalf("crewTailscaleTag=%q want tag:cbx-crew-yossi-e-alpha-crew", got)
+	if got := crewTailscaleTag("yossi.eliaz@incredibuild.com", "Alpha Pond"); got != "tag:cbx-pond-yossi-e-alpha-pond" {
+		t.Fatalf("crewTailscaleTag=%q want tag:cbx-pond-yossi-e-alpha-pond", got)
 	}
-	if got := crewTailscaleTag("", "alpha"); got != "tag:cbx-crew-user-alpha" {
-		t.Fatalf("crewTailscaleTag empty owner=%q want tag:cbx-crew-user-alpha", got)
+	if got := crewTailscaleTag("", "alpha"); got != "tag:cbx-pond-user-alpha" {
+		t.Fatalf("crewTailscaleTag empty owner=%q want tag:cbx-pond-user-alpha", got)
 	}
 	if got := crewTailscaleTag("yossi", ""); got != "" {
-		t.Fatalf("crewTailscaleTag empty crew=%q want empty", got)
+		t.Fatalf("crewTailscaleTag empty pond=%q want empty", got)
 	}
 }
 
 func TestAppendCrewTailscaleTag(t *testing.T) {
 	cfg := Config{
-		Crew: "alpha",
+		Pond: "alpha",
 		Tailscale: TailscaleConfig{
 			Enabled: true,
 			Tags:    []string{"tag:crabbox"},
@@ -247,12 +247,12 @@ func TestAppendCrewTailscaleTag(t *testing.T) {
 	appendCrewTailscaleTag(&cfg, true)
 	found := false
 	for _, tag := range cfg.Tailscale.Tags {
-		if strings.HasPrefix(tag, "tag:cbx-crew-") && strings.HasSuffix(tag, "-alpha") {
+		if strings.HasPrefix(tag, "tag:cbx-pond-") && strings.HasSuffix(tag, "-alpha") {
 			found = true
 		}
 	}
 	if !found {
-		t.Fatalf("expected crew tag appended, got %#v", cfg.Tailscale.Tags)
+		t.Fatalf("expected pond tag appended, got %#v", cfg.Tailscale.Tags)
 	}
 	// Idempotent: a second call must not duplicate the entry.
 	before := len(cfg.Tailscale.Tags)
@@ -261,13 +261,13 @@ func TestAppendCrewTailscaleTag(t *testing.T) {
 		t.Fatalf("appendCrewTailscaleTag duplicated entry; got %#v", cfg.Tailscale.Tags)
 	}
 	// No-op when Tailscale is not enabled.
-	cfg2 := Config{Crew: "alpha", Tailscale: TailscaleConfig{Tags: []string{"tag:crabbox"}}}
+	cfg2 := Config{Pond: "alpha", Tailscale: TailscaleConfig{Tags: []string{"tag:crabbox"}}}
 	appendCrewTailscaleTag(&cfg2, true)
 	if len(cfg2.Tailscale.Tags) != 1 {
 		t.Fatalf("expected no-op when Tailscale disabled, got %#v", cfg2.Tailscale.Tags)
 	}
 	// No-op when the provider does not advertise FeatureTailscale.
-	cfg3 := Config{Crew: "alpha", Tailscale: TailscaleConfig{Enabled: true, Tags: []string{"tag:crabbox"}}}
+	cfg3 := Config{Pond: "alpha", Tailscale: TailscaleConfig{Enabled: true, Tags: []string{"tag:crabbox"}}}
 	appendCrewTailscaleTag(&cfg3, false)
 	if len(cfg3.Tailscale.Tags) != 1 {
 		t.Fatalf("expected no-op when provider lacks FeatureTailscale, got %#v", cfg3.Tailscale.Tags)
@@ -291,7 +291,7 @@ func TestApplyLeaseCreateFlagsAddsCrewTailscaleTag(t *testing.T) {
 	}
 	fs := flag.NewFlagSet("warmup", flag.ContinueOnError)
 	values := registerLeaseCreateFlags(fs, defaults)
-	if err := fs.Parse([]string{"--crew", "alpha", "--tailscale"}); err != nil {
+	if err := fs.Parse([]string{"--pond", "alpha", "--tailscale"}); err != nil {
 		t.Fatal(err)
 	}
 	cfg := defaults
@@ -303,39 +303,39 @@ func TestApplyLeaseCreateFlagsAddsCrewTailscaleTag(t *testing.T) {
 	}
 	hasCrewTag := false
 	for _, tag := range cfg.Tailscale.Tags {
-		if strings.HasPrefix(tag, "tag:cbx-crew-") && strings.HasSuffix(tag, "-alpha") {
+		if strings.HasPrefix(tag, "tag:cbx-pond-") && strings.HasSuffix(tag, "-alpha") {
 			hasCrewTag = true
 		}
 	}
 	if !hasCrewTag {
-		t.Fatalf("expected crew Tailscale tag on cfg, got %#v", cfg.Tailscale.Tags)
+		t.Fatalf("expected pond Tailscale tag on cfg, got %#v", cfg.Tailscale.Tags)
 	}
 }
 
 func TestCloudInitCrewHostsBootstrapEmittedWhenCrewAndTailscale(t *testing.T) {
 	cfg := baseConfig()
 	cfg.SSHUser = "runner"
-	cfg.Crew = "alpha"
+	cfg.Pond = "alpha"
 	cfg.Tailscale.Enabled = true
 	cfg.Tailscale.AuthKey = "tskey-secret"
-	cfg.Tailscale.Tags = []string{"tag:crabbox", "tag:cbx-crew-user-alpha"}
+	cfg.Tailscale.Tags = []string{"tag:crabbox", "tag:cbx-pond-user-alpha"}
 	got := cloudInit(cfg, "ssh-ed25519 test")
 	for _, want := range []string{
 		"/etc/hosts.cbx",
-		"/usr/local/bin/crabbox-crew-hosts",
-		"/etc/systemd/system/crabbox-crew-hosts.service",
-		"/etc/systemd/system/crabbox-crew-hosts.timer",
+		"/usr/local/bin/crabbox-pond-hosts",
+		"/etc/systemd/system/crabbox-pond-hosts.service",
+		"/etc/systemd/system/crabbox-pond-hosts.timer",
 		"/etc/hosts",
-		"# crabbox crew hosts begin",
-		"# crabbox crew hosts end",
+		"# crabbox pond hosts begin",
+		"# crabbox pond hosts end",
 		"OnUnitActiveSec=30s",
-		"ExecStart=/usr/local/bin/crabbox-crew-hosts",
-		"tag:cbx-crew-",
+		"ExecStart=/usr/local/bin/crabbox-pond-hosts",
+		"tag:cbx-pond-",
 		"tailscale status --json",
-		"systemctl enable --now crabbox-crew-hosts.timer",
+		"systemctl enable --now crabbox-pond-hosts.timer",
 	} {
 		if !strings.Contains(got, want) {
-			t.Fatalf("cloudInit(crew) missing %q", want)
+			t.Fatalf("cloudInit(pond) missing %q", want)
 		}
 	}
 }
@@ -345,17 +345,17 @@ func TestCloudInitCrewHostsBootstrapAbsentWithoutCrew(t *testing.T) {
 	cfg.Tailscale.Enabled = true
 	cfg.Tailscale.AuthKey = "tskey-secret"
 	got := cloudInit(cfg, "ssh-ed25519 test")
-	if strings.Contains(got, "crabbox-crew-hosts") {
-		t.Fatalf("cloudInit without --crew must not install crew hosts service")
+	if strings.Contains(got, "crabbox-pond-hosts") {
+		t.Fatalf("cloudInit without --pond must not install pond hosts service")
 	}
 }
 
 func TestCloudInitCrewHostsBootstrapAbsentWithoutTailscale(t *testing.T) {
 	cfg := baseConfig()
-	cfg.Crew = "alpha"
+	cfg.Pond = "alpha"
 	got := cloudInit(cfg, "ssh-ed25519 test")
-	if strings.Contains(got, "crabbox-crew-hosts") {
-		t.Fatalf("cloudInit without --tailscale must not install crew hosts service even when --crew is set")
+	if strings.Contains(got, "crabbox-pond-hosts") {
+		t.Fatalf("cloudInit without --tailscale must not install pond hosts service even when --pond is set")
 	}
 }
 
@@ -374,17 +374,17 @@ func TestDoctorCrewSummaryNoopsWithoutCrew(t *testing.T) {
 	cfg := Config{Provider: "hetzner"}
 	status, message, details := doctorCrewSummary(context.Background(), cfg)
 	if status != "" || message != "" || details != nil {
-		t.Fatalf("expected no crew check without cfg.Crew, got status=%q msg=%q details=%#v", status, message, details)
+		t.Fatalf("expected no pond check without cfg.Pond, got status=%q msg=%q details=%#v", status, message, details)
 	}
 }
 
 func TestDoctorCrewSummarySkipsNonTailscaleProviderWithCrew(t *testing.T) {
-	cfg := Config{Provider: "e2b", Crew: "alpha"}
+	cfg := Config{Provider: "e2b", Pond: "alpha"}
 	status, message, details := doctorCrewSummary(context.Background(), cfg)
 	if status != "skip" {
 		t.Fatalf("expected skip, got %q", status)
 	}
-	want := `crew "alpha": provider e2b does not support the Tailscale plane; crew networking unavailable`
+	want := `pond "alpha": provider e2b does not support the Tailscale plane; pond networking unavailable`
 	if message != want {
 		t.Fatalf("verdict text drifted\n want: %q\n got:  %q", want, message)
 	}
@@ -395,7 +395,7 @@ func TestDoctorCrewSummarySkipsNonTailscaleProviderWithCrew(t *testing.T) {
 
 func TestDoctorCrewSummarySkipsWhenAPIKeyMissing(t *testing.T) {
 	t.Setenv("TS_API_KEY", "")
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	status, _, details := doctorCrewSummary(context.Background(), cfg)
 	if status != "skip" {
 		t.Fatalf("expected skip when TS_API_KEY is missing, got %q", status)
@@ -414,13 +414,13 @@ func TestDoctorCrewSummaryOKWhenACLPresent(t *testing.T) {
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
 		return stubDoctorTailscaleACLClient{policy: policy}
 	}
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	status, message, details := doctorCrewSummary(context.Background(), cfg)
 	if status != "ok" {
 		t.Fatalf("expected ok, got %q (msg=%q details=%#v)", status, message, details)
 	}
 	wantTag := crewTailscaleTag(localCoordinatorOwner(), "alpha")
-	want := fmt.Sprintf(`crew "alpha": Tailscale plane auto-managed (%s)`, wantTag)
+	want := fmt.Sprintf(`pond "alpha": Tailscale plane auto-managed (%s)`, wantTag)
 	if message != want {
 		t.Fatalf("verdict text drifted\n want: %q\n got:  %q", want, message)
 	}
@@ -431,19 +431,19 @@ func TestDoctorCrewSummaryOKWhenACLPresent(t *testing.T) {
 
 func TestDoctorCrewSummaryFailsWhenACLMissing(t *testing.T) {
 	t.Setenv("TS_API_KEY", "tskey-api-stub")
-	policy := crewPolicyFixture("tag:cbx-crew-user-bravo")
+	policy := crewPolicyFixture("tag:cbx-pond-user-bravo")
 	prev := doctorTailscaleACLClientFactory
 	defer func() { doctorTailscaleACLClientFactory = prev }()
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
 		return stubDoctorTailscaleACLClient{policy: policy}
 	}
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	status, message, details := doctorCrewSummary(context.Background(), cfg)
 	if status != "failed" {
 		t.Fatalf("expected failed, got %q", status)
 	}
 	wantTag := crewTailscaleTag(localCoordinatorOwner(), "alpha")
-	want := fmt.Sprintf(`crew "alpha": tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/crew.md`, wantTag)
+	want := fmt.Sprintf(`pond "alpha": tailnet policy row missing for %s. Run with $TS_API_KEY exported to auto-install, or apply the snippet from docs/features/pond.md`, wantTag)
 	if message != want {
 		t.Fatalf("verdict text drifted\n want: %q\n got:  %q", want, message)
 	}
@@ -459,7 +459,7 @@ func TestDoctorCrewSummaryFailsWhenAPIClientErrors(t *testing.T) {
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
 		return stubDoctorTailscaleACLClient{err: fmt.Errorf("tailscale api 401: invalid api key")}
 	}
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	status, message, _ := doctorCrewSummary(context.Background(), cfg)
 	if status != "failed" {
 		t.Fatalf("expected failed, got %q", status)
@@ -482,7 +482,7 @@ func TestDoctorCrewSummarySkipsWhenControlPlaneIncompatible(t *testing.T) {
 	doctorTailscaleACLClientFactory = func(_ string) doctorTailscaleACLClient {
 		return stubDoctorTailscaleACLClient{err: fmt.Errorf("%w: GET https://headscale.example.com/api/v2/tailnet/-/acl returned 404", ErrCrewACLAutoBootstrapUnavailable)}
 	}
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	status, message, details := doctorCrewSummary(context.Background(), cfg)
 	if status != "skip" {
 		t.Fatalf("expected skip on incompatible control plane, got %q (msg=%q)", status, message)
@@ -490,7 +490,7 @@ func TestDoctorCrewSummarySkipsWhenControlPlaneIncompatible(t *testing.T) {
 	if !strings.Contains(message, "https://headscale.example.com") {
 		t.Fatalf("expected control plane URL in message, got %q", message)
 	}
-	if !strings.Contains(message, "docs/features/crew.md") {
+	if !strings.Contains(message, "docs/features/pond.md") {
 		t.Fatalf("expected manual snippet pointer, got %q", message)
 	}
 	if details["reason"] != "control_plane_incompatible" {
@@ -502,7 +502,7 @@ func TestDoctorCrewSummarySkipsWhenControlPlaneIncompatible(t *testing.T) {
 }
 
 func TestCrewACLRowPresentChecksConcreteTag(t *testing.T) {
-	tag := "tag:cbx-crew-yossi-e-alpha"
+	tag := "tag:cbx-pond-yossi-e-alpha"
 	cases := []struct {
 		name string
 		body string
@@ -511,14 +511,14 @@ func TestCrewACLRowPresentChecksConcreteTag(t *testing.T) {
 		{"both present", crewPolicyFixture(tag), true},
 		{"grants present", crewGrantPolicyFixture(tag), true},
 		{"commented sample before grants", `{
-  // "tagOwners": { "tag:cbx-crew-yossi-e-alpha": ["autogroup:admin"] },
-  "tagOwners": { "tag:cbx-crew-yossi-e-alpha": ["autogroup:admin"] },
-  "grants": [{ "src": ["tag:cbx-crew-yossi-e-alpha"], "dst": ["tag:cbx-crew-yossi-e-alpha"], "ip": ["*"] }]
+  // "tagOwners": { "tag:cbx-pond-yossi-e-alpha": ["autogroup:admin"] },
+  "tagOwners": { "tag:cbx-pond-yossi-e-alpha": ["autogroup:admin"] },
+  "grants": [{ "src": ["tag:cbx-pond-yossi-e-alpha"], "dst": ["tag:cbx-pond-yossi-e-alpha"], "ip": ["*"] }]
 }`, true},
-		{"different crew", crewPolicyFixture("tag:cbx-crew-yossi-e-bravo"), false},
-		{"missing tagOwners", `{"acls":[{"src":["tag:cbx-crew-yossi-e-alpha"],"dst":["tag:cbx-crew-yossi-e-alpha:*"]}]}`, false},
-		{"missing dst", `{"tagOwners":{"tag:cbx-crew-yossi-e-alpha":["autogroup:admin"]},"acls":[{"src":["tag:cbx-crew-yossi-e-alpha"],"dst":["tag:crabbox:*"]}]}`, false},
-		{"grant src only", `{"tagOwners":{"tag:cbx-crew-yossi-e-alpha":["autogroup:admin"]},"grants":[{"src":["tag:cbx-crew-yossi-e-alpha"],"dst":["tag:crabbox"],"ip":["*"]}]}`, false},
+		{"different pond", crewPolicyFixture("tag:cbx-pond-yossi-e-bravo"), false},
+		{"missing tagOwners", `{"acls":[{"src":["tag:cbx-pond-yossi-e-alpha"],"dst":["tag:cbx-pond-yossi-e-alpha:*"]}]}`, false},
+		{"missing dst", `{"tagOwners":{"tag:cbx-pond-yossi-e-alpha":["autogroup:admin"]},"acls":[{"src":["tag:cbx-pond-yossi-e-alpha"],"dst":["tag:crabbox:*"]}]}`, false},
+		{"grant src only", `{"tagOwners":{"tag:cbx-pond-yossi-e-alpha":["autogroup:admin"]},"grants":[{"src":["tag:cbx-pond-yossi-e-alpha"],"dst":["tag:crabbox"],"ip":["*"]}]}`, false},
 		{"missing tag mention", `{"acls":[{"src":["*"]}],"tagOwners":{"tag:crabbox":["autogroup:admin"]}}`, false},
 		{"empty body", ``, false},
 	}

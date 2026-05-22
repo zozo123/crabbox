@@ -922,22 +922,22 @@ func cloudInitTailscaleBootstrap(cfg Config) string {
     fi
     chown ` + sshUserChown + ` /var/lib/crabbox/tailscale-* || true
     chmod 0640 /var/lib/crabbox/tailscale-* || true`
-	if crew := normalizeCrewName(cfg.Crew); crew != "" {
-		tailscaleUpScript += "\n" + cloudInitCrewHostsBootstrap(cfg.Crew)
+	if pond := normalizeCrewName(cfg.Pond); pond != "" {
+		tailscaleUpScript += "\n" + cloudInitCrewHostsBootstrap(cfg.Pond)
 	}
 	return tailscaleUpScript
 }
 
-// cloudInitCrewHostsBootstrap installs /usr/local/bin/crabbox-crew-hosts and a
+// cloudInitCrewHostsBootstrap installs /usr/local/bin/crabbox-pond-hosts and a
 // systemd timer that rewrites /etc/hosts.cbx plus a managed /etc/hosts block
-// every 30s with one entry per crew peer reachable on the local tailnet. Peers
+// every 30s with one entry per pond peer reachable on the local tailnet. Peers
 // are discovered purely from the box-local `tailscale status --json` output
-// filtered by the crew ACL tag, so the broker never sees a Tailscale
+// filtered by the pond ACL tag, so the broker never sees a Tailscale
 // credential. Each peer renders as `<tailnet-ipv4> <slug>.cbx` where `<slug>`
 // is the suffix of the `crabbox-<slug>` hostname template every
 // Tailscale-capable provider already uses.
-func cloudInitCrewHostsBootstrap(crew string) string {
-	tag := crewTailscaleTag(localCoordinatorOwner(), crew)
+func cloudInitCrewHostsBootstrap(pond string) string {
+	tag := crewTailscaleTag(localCoordinatorOwner(), pond)
 	if tag == "" {
 		return ""
 	}
@@ -945,7 +945,7 @@ func cloudInitCrewHostsBootstrap(crew string) string {
 	tagLiteral := shellQuote(tag)
 	systemHostsFile := shellQuote("/etc/hosts")
 	return `    install -m 0644 /dev/null ` + hostsFile + ` || true
-    cat >/usr/local/bin/crabbox-crew-hosts <<'CREWHOSTS'
+    cat >/usr/local/bin/crabbox-pond-hosts <<'CREWHOSTS'
 #!/bin/sh
 set -eu
 TAG="$1"
@@ -965,12 +965,12 @@ jq -r --arg tag "$TAG" '
   | .[]
   | "\(.ip) \(.host).cbx"
 ' "$TMP".raw > "$TMP"
-printf '# managed by crabbox-crew-hosts; do not edit\n' >"$OUT".new
+printf '# managed by crabbox-pond-hosts; do not edit\n' >"$OUT".new
 cat "$TMP" >>"$OUT".new
 mv "$OUT".new "$OUT"
 chmod 0644 "$OUT"
-BEGIN="# crabbox crew hosts begin"
-END="# crabbox crew hosts end"
+BEGIN="# crabbox pond hosts begin"
+END="# crabbox pond hosts end"
 if [ -f "$SYSTEM_HOSTS" ]; then
   awk -v begin="$BEGIN" -v end="$END" '
     $0 == begin { skip = 1; next }
@@ -989,33 +989,33 @@ fi
 mv "$SYSTEM_HOSTS".new "$SYSTEM_HOSTS"
 chmod 0644 "$SYSTEM_HOSTS"
 CREWHOSTS
-    chmod 0755 /usr/local/bin/crabbox-crew-hosts
-    cat >/etc/systemd/system/crabbox-crew-hosts.service <<'CREWUNIT'
+    chmod 0755 /usr/local/bin/crabbox-pond-hosts
+    cat >/etc/systemd/system/crabbox-pond-hosts.service <<'CREWUNIT'
 [Unit]
-Description=Refresh Crabbox crew peer hostnames
+Description=Refresh Crabbox pond peer hostnames
 After=tailscaled.service network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/crabbox-crew-hosts ` + tag + ` ` + crewHostsFile + ` /etc/hosts
+ExecStart=/usr/local/bin/crabbox-pond-hosts ` + tag + ` ` + crewHostsFile + ` /etc/hosts
 CREWUNIT
-    cat >/etc/systemd/system/crabbox-crew-hosts.timer <<'CREWTIMER'
+    cat >/etc/systemd/system/crabbox-pond-hosts.timer <<'CREWTIMER'
 [Unit]
-Description=Refresh Crabbox crew hostnames every ` + crewHostsRefreshPeriod + `
+Description=Refresh Crabbox pond hostnames every ` + crewHostsRefreshPeriod + `
 
 [Timer]
 OnBootSec=10s
 OnUnitActiveSec=` + crewHostsRefreshPeriod + `
 AccuracySec=2s
-Unit=crabbox-crew-hosts.service
+Unit=crabbox-pond-hosts.service
 
 [Install]
 WantedBy=timers.target
 CREWTIMER
     systemctl daemon-reload
-    systemctl enable --now crabbox-crew-hosts.timer
-    /usr/local/bin/crabbox-crew-hosts ` + tagLiteral + ` ` + hostsFile + ` ` + systemHostsFile + ` || true
+    systemctl enable --now crabbox-pond-hosts.timer
+    /usr/local/bin/crabbox-pond-hosts ` + tagLiteral + ` ` + hostsFile + ` ` + systemHostsFile + ` || true
     test -f ` + hostsFile + `
 `
 }

@@ -118,7 +118,7 @@ describe("provider labels", () => {
     expect(Object.values(labels).join(" ")).not.toContain("tskey-secret");
   });
 
-  it("includes the crew label when the lease is tagged", () => {
+  it("includes the pond label when the lease is tagged", () => {
     const config: LeaseConfig = {
       provider: "aws",
       target: "linux",
@@ -156,7 +156,7 @@ describe("provider labels", () => {
       idleTimeoutSeconds: 7200,
       keep: false,
       sshPublicKey: "ssh-ed25519 test",
-      crew: "alpha",
+      pond: "alpha",
     } as LeaseConfig;
     const labels = leaseProviderLabels(
       config,
@@ -166,10 +166,10 @@ describe("provider labels", () => {
       "aws",
       new Date("2026-05-01T12:00:00Z"),
     );
-    expect(labels.crew).toBe("alpha");
+    expect(labels.pond).toBe("alpha");
   });
 
-  it("omits the crew label when the lease has no crew", () => {
+  it("omits the pond label when the lease has no pond", () => {
     const config: LeaseConfig = {
       provider: "aws",
       target: "linux",
@@ -207,7 +207,7 @@ describe("provider labels", () => {
       idleTimeoutSeconds: 7200,
       keep: false,
       sshPublicKey: "ssh-ed25519 test",
-      crew: "",
+      pond: "",
     } as LeaseConfig;
     const labels = leaseProviderLabels(
       config,
@@ -217,6 +217,6 @@ describe("provider labels", () => {
       "aws",
       new Date("2026-05-01T12:00:00Z"),
     );
-    expect(labels.crew).toBeUndefined();
+    expect(labels.pond).toBeUndefined();
   });
 });

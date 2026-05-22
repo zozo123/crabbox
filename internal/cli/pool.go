@@ -20,7 +20,7 @@ func (a App) list(ctx context.Context, args []string) error {
 	provider := fs.String("provider", defaults.Provider, providerHelpAll())
 	jsonOut := fs.Bool("json", false, "print JSON")
 	refresh := fs.Bool("refresh", false, "refresh provider-backed state where supported")
-	crewFilter := fs.String("crew", "", "only list leases tagged with this crew")
+	crewFilter := fs.String("pond", "", "only list leases tagged with this pond")
 	providerFlags := registerProviderFlags(fs, defaults)
 	targetFlags := registerTargetFlags(fs, defaults)
 	if err := parseFlags(fs, args); err != nil {
@@ -85,9 +85,9 @@ func (a App) list(ctx context.Context, args []string) error {
 // backend produces) by inspecting label-bearing entries. Backends that emit
 // shapes without labels are returned unchanged so JSON list output stays
 // authoritative for those providers.
-func filterJSONListViewByCrew(view any, crew string) any {
-	crew = normalizeCrewName(crew)
-	if crew == "" {
+func filterJSONListViewByCrew(view any, pond string) any {
+	pond = normalizeCrewName(pond)
+	if pond == "" {
 		return view
 	}
 	entries, ok := view.([]any)
@@ -110,7 +110,7 @@ func filterJSONListViewByCrew(view any, crew string) any {
 		if labels == nil {
 			continue
 		}
-		if normalizeCrewName(labels[crewLabelKey]) == crew {
+		if normalizeCrewName(labels[crewLabelKey]) == pond {
 			kept = append(kept, entry)
 		}
 	}

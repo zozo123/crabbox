@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-// BridgePeer is the cross-provider shape returned by `crabbox crew peers`.
-// One row per crew member, regardless of which plane carries that member:
+// BridgePeer is the cross-provider shape returned by `crabbox pond peers`.
+// One row per pond member, regardless of which plane carries that member:
 //
 //   - Managed-Linux providers (AWS / Azure / GCP / Hetzner / Proxmox / SSH)
 //     surface with Transport="tailnet" and Endpoint=tailnet IPv4.
@@ -30,7 +30,7 @@ type BridgePeer struct {
 	Slug        string             `json:"slug"`
 	LeaseID     string             `json:"leaseID"`
 	Provider    string             `json:"provider"`
-	Crew        string             `json:"crew"`
+	Pond        string             `json:"pond"`
 	Transport   string             `json:"transport"`
 	Endpoint    string             `json:"endpoint"`
 	Labels      map[string]string  `json:"labels,omitempty"`
@@ -39,7 +39,7 @@ type BridgePeer struct {
 	BridgeState string             `json:"bridgeState,omitempty"`
 }
 
-// Transport classes used by the unified `crew peers` view and by the doctor
+// Transport classes used by the unified `pond peers` view and by the doctor
 // reachability matrix. The five values cover every shape the resolver can
 // emit; see bridgePeerFromClaim for the per-provider mapping.
 const (
@@ -63,9 +63,9 @@ type BridgePeerTarget struct {
 }
 
 // BridgeProvider is the interface delegated-provider backends implement to
-// surface peer endpoints to the crew bridge plane. A backend that does not
-// implement BridgeProvider is treated as "metadata-only" — the crew label is
-// still honored, peers are listed without targets, and `crew peers` reports
+// surface peer endpoints to the pond bridge plane. A backend that does not
+// implement BridgeProvider is treated as "metadata-only" — the pond label is
+// still honored, peers are listed without targets, and `pond peers` reports
 // the gap honestly instead of pretending to bridge.
 //
 // Implementations are responsible for:
@@ -77,28 +77,28 @@ type BridgePeerTarget struct {
 //     a sandbox, without side effects.
 //
 // The PublishPeer flow is opt-in: it is only invoked when the user passes
-// `--share-port` to `crabbox crew peers`. ListPeerTargets is always cheap and
+// `--share-port` to `crabbox pond peers`. ListPeerTargets is always cheap and
 // safe — it is what powers the doctor probe.
 type BridgeProvider interface {
 	PublishPeer(ctx context.Context, leaseID string, port int, ttl time.Duration) (BridgePeerTarget, error)
 	ListPeerTargets(ctx context.Context, leaseID string) ([]BridgePeerTarget, error)
 }
 
-// crewPeersFlags holds the parsed flags for `crabbox crew peers`. It is
+// crewPeersFlags holds the parsed flags for `crabbox pond peers`. It is
 // extracted so the command can be unit tested without touching the global
 // flag set.
 type crewPeersFlags struct {
-	Crew      string
+	Pond      string
 	Provider  string
 	JSON      bool
 	SharePort int
 	ShareTTL  time.Duration
 }
 
-func (a App) crew(ctx context.Context, args []string) error {
+func (a App) pond(ctx context.Context, args []string) error {
 	if len(args) == 0 {
 		a.crewHelp()
-		return exit(2, "missing crew subcommand")
+		return exit(2, "missing pond subcommand")
 	}
 	switch args[0] {
 	case "peers":
@@ -108,29 +108,29 @@ func (a App) crew(ctx context.Context, args []string) error {
 		return nil
 	default:
 		a.crewHelp()
-		return exit(2, "unknown crew subcommand %q", args[0])
+		return exit(2, "unknown pond subcommand %q", args[0])
 	}
 }
 
 func (a App) crewHelp() {
-	fmt.Fprintln(a.Stdout, `Crew bridge plane — list peer endpoints for delegated providers.
+	fmt.Fprintln(a.Stdout, `Pond bridge plane — list peer endpoints for delegated providers.
 
 Usage:
-  crabbox crew peers --crew <name> [flags]
+  crabbox pond peers --pond <name> [flags]
 
 Flags:
-  --crew <name>          Required. Crew label to resolve.
+  --pond <name>          Required. Pond label to resolve.
   --provider <name>      Restrict to a single provider (default: all delegated
-                         providers in the crew).
+                         providers in the pond).
   --json                 Emit machine-readable JSON instead of text.
   --share-port <port>    Publish a per-peer public URL for this port (idempotent).
   --share-ttl <duration> TTL for shares created with --share-port (default 24h).
 
 Examples:
-  crabbox crew peers --crew alpha
-  crabbox crew peers --crew alpha --provider islo
-  crabbox crew peers --crew alpha --json
-  crabbox crew peers --crew alpha --share-port 8080 --json
+  crabbox pond peers --pond alpha
+  crabbox pond peers --pond alpha --provider islo
+  crabbox pond peers --pond alpha --json
+  crabbox pond peers --pond alpha --share-port 8080 --json
 
 The bridge plane is HTTP-only by design: peers are reachable via the per-
 provider native ingress (islo shares, e2b sandbox previews, railway deploy
@@ -141,27 +141,27 @@ of pretending to bridge.`)
 }
 
 func (a App) crewPeers(ctx context.Context, args []string) error {
-	fs := newFlagSet("crew peers", a.Stderr)
+	fs := newFlagSet("pond peers", a.Stderr)
 	flags := crewPeersFlags{ShareTTL: 24 * time.Hour}
-	fs.StringVar(&flags.Crew, "crew", "", "crew label to resolve (required)")
-	fs.StringVar(&flags.Provider, "provider", "", "restrict to a single provider (default: all delegated providers in the crew)")
+	fs.StringVar(&flags.Pond, "pond", "", "pond label to resolve (required)")
+	fs.StringVar(&flags.Provider, "provider", "", "restrict to a single provider (default: all delegated providers in the pond)")
 	fs.BoolVar(&flags.JSON, "json", false, "emit machine-readable JSON")
 	fs.IntVar(&flags.SharePort, "share-port", 0, "if set, publish a public URL for this port on each peer")
 	fs.DurationVar(&flags.ShareTTL, "share-ttl", 24*time.Hour, "TTL for shares created with --share-port")
 	if err := parseFlags(fs, args); err != nil {
 		return err
 	}
-	crewName, err := requestedCrewName(flags.Crew)
+	crewName, err := requestedCrewName(flags.Pond)
 	if err != nil {
 		return err
 	}
 	if crewName == "" {
-		return exit(2, "--crew is required")
+		return exit(2, "--pond is required")
 	}
 	if flags.SharePort != 0 && (flags.SharePort < 1 || flags.SharePort > 65535) {
 		return exit(2, "--share-port must be between 1 and 65535")
 	}
-	// Empty --provider means "every provider represented in the crew"; the
+	// Empty --provider means "every provider represented in the pond"; the
 	// resolver fans out per provider and concatenates the result. Non-empty
 	// preserves the original single-provider semantics so existing scripts
 	// (and the islo live-demo in PR #136) keep working unchanged.
@@ -184,7 +184,7 @@ type crewPeersJSON struct {
 	Members []BridgePeer `json:"members"`
 }
 
-// resolveCrewPeers builds the BridgePeer list for a crew. The resolver is
+// resolveCrewPeers builds the BridgePeer list for a pond. The resolver is
 // split out so unit tests can swap in fakes for the provider backend and the
 // claim store without going through the full kong/flag stack.
 //
@@ -192,20 +192,20 @@ type crewPeersJSON struct {
 // design: a single backend is configured and every matching claim is fanned
 // out against it. When provider is empty the resolver groups matching claims
 // by provider, configures each backend exactly once, and concatenates the
-// results — this is the path that gives `crabbox crew peers --crew <name>`
+// results — this is the path that gives `crabbox pond peers --pond <name>`
 // honest cross-provider output without making the caller enumerate providers
 // by hand.
-func resolveCrewPeers(ctx context.Context, rt Runtime, crew, provider string, flags crewPeersFlags) ([]BridgePeer, error) {
+func resolveCrewPeers(ctx context.Context, rt Runtime, pond, provider string, flags crewPeersFlags) ([]BridgePeer, error) {
 	claims, err := listLeaseClaims()
 	if err != nil {
 		return nil, err
 	}
-	matches := filterClaimsForCrew(claims, crew, provider)
+	matches := filterClaimsForCrew(claims, pond, provider)
 	if len(matches) == 0 {
 		return []BridgePeer{}, nil
 	}
 	// Bucket claims by provider so each backend is configured at most once,
-	// even when the same provider has several leases in the crew.
+	// even when the same provider has several leases in the pond.
 	byProvider := make(map[string][]leaseClaim)
 	order := make([]string, 0, 4)
 	for _, claim := range matches {
@@ -272,7 +272,7 @@ func resolveCrewPeersForProvider(ctx context.Context, rt Runtime, provider strin
 			// We invoke the bridge backend when the caller asked us to mint
 			// a share (--share-port) or when no canonical endpoint is yet
 			// recorded on the claim. Skipping the lookup when an endpoint
-			// is already known keeps `crew peers` cheap for read-only
+			// is already known keeps `pond peers` cheap for read-only
 			// listings on already-published shares.
 			needBridge := flags.SharePort > 0 || peer.Endpoint == ""
 			if bridge == nil && needBridge {
@@ -330,7 +330,7 @@ func bridgePeerFromClaim(claim leaseClaim, class string) BridgePeer {
 		Slug:     claim.Slug,
 		LeaseID:  claim.LeaseID,
 		Provider: claim.Provider,
-		Crew:     claim.Crew,
+		Pond:     claim.Pond,
 		Labels:   cloneStringMap(claim.Labels),
 	}
 	switch class {
@@ -403,17 +403,17 @@ func cloneStringMap(in map[string]string) map[string]string {
 }
 
 // filterClaimsForCrew returns the subset of claims that belong to the named
-// crew and (when provider is non-empty) the named provider. Empty crew
+// pond and (when provider is non-empty) the named provider. Empty pond
 // returns no matches — crews are never implicit.
-func filterClaimsForCrew(claims []leaseClaim, crew, provider string) []leaseClaim {
-	crew = normalizeCrewName(crew)
-	if crew == "" {
+func filterClaimsForCrew(claims []leaseClaim, pond, provider string) []leaseClaim {
+	pond = normalizeCrewName(pond)
+	if pond == "" {
 		return nil
 	}
 	provider = strings.TrimSpace(provider)
 	out := make([]leaseClaim, 0, len(claims))
 	for _, claim := range claims {
-		if normalizeCrewName(claim.Crew) != crew {
+		if normalizeCrewName(claim.Pond) != pond {
 			continue
 		}
 		if provider != "" && claim.Provider != provider {
@@ -449,7 +449,7 @@ func realLoadBridgeProvider(provider string, rt Runtime) (BridgeProvider, error)
 	cfg.Provider = provider
 	resolved, err := ProviderFor(provider)
 	if err != nil {
-		return nil, exit(2, "unknown provider %q for crew bridge", provider)
+		return nil, exit(2, "unknown provider %q for pond bridge", provider)
 	}
 	backend, err := resolved.Configure(cfg, rt)
 	if err != nil {
@@ -467,7 +467,7 @@ func realLoadBridgeProvider(provider string, rt Runtime) (BridgeProvider, error)
 
 // ErrBridgeNotImplemented is returned by helpers that need an explicit signal
 // that the requested provider does not implement BridgeProvider yet.
-var ErrBridgeNotImplemented = errors.New("crew bridge plane not implemented for this provider")
+var ErrBridgeNotImplemented = errors.New("pond bridge plane not implemented for this provider")
 
 func renderBridgePeers(w interface{ Write([]byte) (int, error) }, peers []BridgePeer) {
 	if len(peers) == 0 {
@@ -475,7 +475,7 @@ func renderBridgePeers(w interface{ Write([]byte) (int, error) }, peers []Bridge
 		return
 	}
 	for _, peer := range peers {
-		fmt.Fprintf(w, "%s\tlease=%s\tprovider=%s\tcrew=%s\ttransport=%s", peer.Slug, peer.LeaseID, peer.Provider, peer.Crew, peer.Transport)
+		fmt.Fprintf(w, "%s\tlease=%s\tprovider=%s\tcrew=%s\ttransport=%s", peer.Slug, peer.LeaseID, peer.Provider, peer.Pond, peer.Transport)
 		if peer.Endpoint != "" {
 			fmt.Fprintf(w, "\tendpoint=%s", peer.Endpoint)
 		}

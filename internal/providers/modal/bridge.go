@@ -15,9 +15,9 @@ import (
 // out of scope for PR #136.
 //
 // So the modal adapter implements core.BridgeProvider only to return
-// core.ErrBridgeNotImplemented. The crew bridge resolver maps that error to
+// core.ErrBridgeNotImplemented. The pond bridge resolver maps that error to
 // BridgeState="unsupported" on the peer, which is honest reporting: callers
-// see modal peers listed in the crew with a clear "no bridge plane for this
+// see modal peers listed in the pond with a clear "no bridge plane for this
 // provider" signal instead of a silently empty Targets slice.
 
 // PublishPeer reports that Modal does not participate in the bridge plane.

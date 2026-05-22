@@ -193,7 +193,7 @@ func TestIsloCreateSandboxStoresCrewClaimForList(t *testing.T) {
 	client := &fakeIsloSyncClient{createName: "crabbox-repo-abcdef"}
 	backend := &isloBackend{
 		cfg: Config{
-			Crew: "Alpha Crew",
+			Pond: "Alpha Pond",
 			Islo: IsloConfig{Workdir: "team/repo"},
 		},
 		rt: Runtime{Stderr: io.Discard},
@@ -206,12 +206,12 @@ func TestIsloCreateSandboxStoresCrewClaimForList(t *testing.T) {
 	if err != nil || !ok {
 		t.Fatalf("resolve claim ok=%t err=%v", ok, err)
 	}
-	if claim.Crew != "alpha-crew" {
-		t.Fatalf("claim crew=%q want alpha-crew", claim.Crew)
+	if claim.Pond != "alpha-pond" {
+		t.Fatalf("claim pond=%q want alpha-pond", claim.Pond)
 	}
 	server := isloSandboxToServer(&gosdk.SandboxResponse{Name: client.createName, Status: "running"})
-	if server.Labels["crew"] != "alpha-crew" {
-		t.Fatalf("server crew label=%q labels=%#v", server.Labels["crew"], server.Labels)
+	if server.Labels["pond"] != "alpha-pond" {
+		t.Fatalf("server pond label=%q labels=%#v", server.Labels["pond"], server.Labels)
 	}
 	if server.Labels["slug"] != normalizeLeaseSlug(slug) {
 		t.Fatalf("server slug=%q want %q", server.Labels["slug"], normalizeLeaseSlug(slug))

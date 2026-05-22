@@ -62,8 +62,8 @@ func claimLeaseForRepoProvider(leaseID, slug, provider, repoRoot string, idleTim
 	return core.ClaimLeaseForRepoProvider(leaseID, slug, provider, repoRoot, idleTimeout, reclaim)
 }
 
-func claimLeaseForRepoProviderWithCrew(leaseID, slug, provider, crew, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
-	return core.ClaimLeaseForRepoProviderWithCrew(leaseID, slug, provider, crew, repoRoot, idleTimeout, reclaim)
+func claimLeaseForRepoProviderWithCrew(leaseID, slug, provider, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
+	return core.ClaimLeaseForRepoProviderWithCrew(leaseID, slug, provider, pond, repoRoot, idleTimeout, reclaim)
 }
 
 func resolveLeaseClaim(identifier string) (core.LeaseClaim, bool, error) {

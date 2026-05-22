@@ -40,7 +40,7 @@ func (b *isloBackend) PublishPeer(ctx context.Context, leaseID string, port int,
 }
 
 // ListPeerTargets implements core.BridgeProvider. It is side-effect free —
-// the doctor probe and the no-flag `crew peers` view both call it.
+// the doctor probe and the no-flag `pond peers` view both call it.
 func (b *isloBackend) ListPeerTargets(ctx context.Context, leaseID string) ([]core.BridgePeerTarget, error) {
 	name, err := isloSandboxNameFromLeaseID(leaseID)
 	if err != nil {

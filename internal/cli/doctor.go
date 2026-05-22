@@ -33,7 +33,7 @@ func (a App) doctor(ctx context.Context, args []string) error {
 	provider := fs.String("provider", defaults.Provider, providerHelpAll())
 	profile := fs.String("profile", defaults.Profile, "configured profile for remote prerequisite checks")
 	id := fs.String("id", "", "remote lease id to inspect")
-	crew := fs.String("crew", defaults.Crew, "verify Tailscale ACL setup for this crew")
+	pond := fs.String("pond", defaults.Pond, "verify Tailscale ACL setup for this pond")
 	jsonOut := fs.Bool("json", false, "print JSON")
 	probeSSH := fs.Bool("doctor-probe-ssh", false, "probe static SSH reachability during doctor")
 	targetFlags := registerTargetFlags(fs, defaults)
@@ -50,12 +50,12 @@ func (a App) doctor(ctx context.Context, args []string) error {
 	if err := applySelectedProfileConfig(&cfg); err != nil {
 		return err
 	}
-	if flagWasSet(fs, "crew") {
-		crewName, err := requestedCrewName(*crew)
+	if flagWasSet(fs, "pond") {
+		crewName, err := requestedCrewName(*pond)
 		if err != nil {
 			return err
 		}
-		cfg.Crew = crewName
+		cfg.Pond = crewName
 	}
 	ok := true
 	var checks []doctorJSONCheck
@@ -79,24 +79,24 @@ func (a App) doctor(ctx context.Context, args []string) error {
 			if status == "failed" {
 				ok = false
 			}
-			record(status, "crew", message, details)
+			record(status, "pond", message, details)
 		}
 		// Cross-provider reachability matrix: a separate doctor row that
-		// folds the unified `crew peers` view into a per-transport-pair
+		// folds the unified `pond peers` view into a per-transport-pair
 		// reachability grid. The grid is the load-bearing output users get
-		// when they pass `--crew`, so the matrix text is also written to
+		// when they pass `--pond`, so the matrix text is also written to
 		// stdout in non-JSON mode so it shows up alongside the per-check
 		// status lines.
-		if crew := normalizeCrewName(cfg.Crew); crew != "" {
-			matrix, rendered, err := doctorCrewReachabilitySummary(crew)
+		if pond := normalizeCrewName(cfg.Pond); pond != "" {
+			matrix, rendered, err := doctorCrewReachabilitySummary(pond)
 			if err != nil {
 				return err
 			}
-			details := map[string]string{"crew": crew, "members": fmt.Sprintf("%d", len(matrix.Members))}
+			details := map[string]string{"pond": pond, "members": fmt.Sprintf("%d", len(matrix.Members))}
 			for transport, count := range matrix.Breakdown {
 				details["transport_"+transport] = fmt.Sprintf("%d", count)
 			}
-			record("ok", "crew-matrix", fmt.Sprintf("crew %q: %d members; matrix=%d cells", crew, len(matrix.Members), len(matrix.Cells)), details)
+			record("ok", "pond-matrix", fmt.Sprintf("pond %q: %d members; matrix=%d cells", pond, len(matrix.Members), len(matrix.Cells)), details)
 			if !*jsonOut {
 				fmt.Fprint(a.Stdout, rendered)
 			}

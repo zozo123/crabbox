@@ -323,7 +323,7 @@ func TestCrewACLEnsureSurfacesAfterPersistent412(t *testing.T) {
 
 func TestMaybeBootstrapCrewACLNoopWithoutAPIKey(t *testing.T) {
 	t.Setenv("TS_API_KEY", "")
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
 	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
 		t.Fatalf("expected silent noop without TS_API_KEY, got %v", err)
@@ -337,7 +337,7 @@ func TestMaybeBootstrapCrewACLCallsFactoryWhenKeyPresent(t *testing.T) {
 	prev := crewTailnetACLClientFactory
 	defer func() { crewTailnetACLClientFactory = prev }()
 	crewTailnetACLClientFactory = func(_ string) crewTailnetACLClient { return stub }
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
 	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
 		t.Fatalf("maybeBootstrapCrewACL: %v", err)
@@ -426,7 +426,7 @@ func TestMaybeBootstrapCrewACLSilentlySkipsWhenControlPlaneUnavailable(t *testin
 	crewTailnetACLClientFactory = func(_ string) crewTailnetACLClient {
 		return &stubCrewTailnetACLClient{getErr: fmt.Errorf("%w: GET / returned 404", ErrCrewACLAutoBootstrapUnavailable)}
 	}
-	cfg := Config{Provider: "hetzner", Crew: "alpha"}
+	cfg := Config{Provider: "hetzner", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
 	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
 		t.Fatalf("expected silent skip on unavailable control plane, got %v", err)
@@ -439,7 +439,7 @@ func TestMaybeBootstrapCrewACLSkipsNonTailscaleProvider(t *testing.T) {
 	prev := crewTailnetACLClientFactory
 	defer func() { crewTailnetACLClientFactory = prev }()
 	crewTailnetACLClientFactory = func(_ string) crewTailnetACLClient { return stub }
-	cfg := Config{Provider: "e2b", Crew: "alpha"}
+	cfg := Config{Provider: "e2b", Pond: "alpha"}
 	cfg.Tailscale.Enabled = true
 	if err := maybeBootstrapCrewACL(context.Background(), cfg); err != nil {
 		t.Fatalf("maybeBootstrapCrewACL: %v", err)

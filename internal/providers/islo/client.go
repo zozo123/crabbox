@@ -33,7 +33,7 @@ type isloAPI interface {
 
 // IsloShare describes a per-port public HTTPS share produced by the islo
 // `POST /sandboxes/{name}/shares` API. It is the islo-specific shape of the
-// generic BridgePeer entry surfaced by the crew bridge plane.
+// generic BridgePeer entry surfaced by the pond bridge plane.
 type IsloShare struct {
 	ShareID   string    `json:"share_id"`
 	URL       string    `json:"url"`

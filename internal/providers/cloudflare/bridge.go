@@ -16,7 +16,7 @@ import (
 //
 // The adapter still satisfies core.BridgeProvider so the resolver tags the
 // peer as `BridgeState="unsupported"`, which surfaces the gap to callers via
-// `crabbox crew peers` instead of pretending the peer has no targets yet.
+// `crabbox pond peers` instead of pretending the peer has no targets yet.
 
 // PublishPeer reports that Cloudflare does not participate in the bridge plane.
 func (b *cloudflareBackend) PublishPeer(ctx context.Context, leaseID string, port int, ttl time.Duration) (core.BridgePeerTarget, error) {

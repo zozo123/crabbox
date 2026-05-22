@@ -34,7 +34,7 @@ type BridgePeerProbeResult struct {
 //   - "no-targets" — peer has no published bridge targets.
 //   - "unsupported" — provider explicitly does not implement the bridge
 //     plane (e.g. modal/cloudflare/tensorlake). The peer is still listed so
-//     `crabbox crew peers` callers see the gap.
+//     `crabbox pond peers` callers see the gap.
 //   - "unsupported-provider" — provider has no BridgeProvider implementation
 //     at all. Same semantic as "unsupported" but produced by the framework
 //     fallback rather than an explicit per-provider adapter.
@@ -112,7 +112,7 @@ func shortenProbeError(s string) string {
 	return s
 }
 
-// Reachability cell states used by the crew doctor matrix. The mapping in
+// Reachability cell states used by the pond doctor matrix. The mapping in
 // reachabilityCell captures the asymmetric reality of the four planes — a
 // peer reachable only by URL cannot be dialed from a peer that lives only
 // on the tailnet (the tailnet member has no public endpoint to push toward).
@@ -122,7 +122,7 @@ const (
 	reachNo   = "no"
 )
 
-// ReachabilityCell records a single source→destination cell of the crew
+// ReachabilityCell records a single source→destination cell of the pond
 // reachability matrix. Note carries the honest caveat for non-trivial cells
 // (operator-side bridges, asymmetric reach, …).
 type ReachabilityCell struct {
@@ -132,12 +132,12 @@ type ReachabilityCell struct {
 	Note  string `json:"note,omitempty"`
 }
 
-// CrewReachabilityMatrix is the per-crew reachability matrix surfaced by
-// `crabbox doctor --crew <name>`. Members lists every distinct transport
-// observed in the crew (so callers can interpret the per-row meaning), and
+// CrewReachabilityMatrix is the per-pond reachability matrix surfaced by
+// `crabbox doctor --pond <name>`. Members lists every distinct transport
+// observed in the pond (so callers can interpret the per-row meaning), and
 // Cells is the dense matrix indexed by (from, to) transport pair.
 type CrewReachabilityMatrix struct {
-	Crew       string             `json:"crew"`
+	Pond       string             `json:"pond"`
 	Members    []BridgePeer       `json:"members"`
 	Breakdown  map[string]int     `json:"breakdown"`
 	Transports []string           `json:"transports"`
@@ -157,7 +157,7 @@ var crewReachableTransports = []string{
 
 // reachabilityCell returns the ok/warn/no cell for a (from, to) transport
 // pair plus the honest note attached to it. The mapping is asymmetric on
-// purpose — see docs/features/crew.md for the rationale.
+// purpose — see docs/features/pond.md for the rationale.
 func reachabilityCell(from, to string) ReachabilityCell {
 	cell := ReachabilityCell{From: from, To: to, State: reachNo}
 	switch from {
@@ -207,9 +207,9 @@ func reachabilityCell(from, to string) ReachabilityCell {
 }
 
 // buildCrewReachabilityMatrix folds a peer list into the doctor matrix. It
-// only emits rows/cols for transports actually present in the crew, so a
-// crew with no SSH-lease members will not get an "ssh →" row.
-func buildCrewReachabilityMatrix(crew string, peers []BridgePeer) CrewReachabilityMatrix {
+// only emits rows/cols for transports actually present in the pond, so a
+// pond with no SSH-lease members will not get an "ssh →" row.
+func buildCrewReachabilityMatrix(pond string, peers []BridgePeer) CrewReachabilityMatrix {
 	breakdown := map[string]int{}
 	for _, peer := range peers {
 		key := peer.Transport
@@ -229,7 +229,7 @@ func buildCrewReachabilityMatrix(crew string, peers []BridgePeer) CrewReachabili
 		}
 	}
 	return CrewReachabilityMatrix{
-		Crew:       crew,
+		Pond:       pond,
 		Members:    peers,
 		Breakdown:  breakdown,
 		Transports: transports,
@@ -260,7 +260,7 @@ func observedTransports(breakdown map[string]int) []string {
 // shown in the user-facing docs. Cell glyphs are pure ASCII so the output
 // stays readable on terminals without unicode font support.
 func renderCrewReachabilityMatrix(w io.Writer, matrix CrewReachabilityMatrix) {
-	fmt.Fprintf(w, "crew %q: %d members\n", matrix.Crew, len(matrix.Members))
+	fmt.Fprintf(w, "pond %q: %d members\n", matrix.Pond, len(matrix.Members))
 	parts := make([]string, 0, len(matrix.Breakdown))
 	for _, transport := range crewReachableTransports {
 		if matrix.Breakdown[transport] > 0 {
@@ -300,15 +300,15 @@ func reachabilityGlyph(state string) string {
 // matrix from the local claim sidecar and returns the text rendering. The
 // result is plugged into the existing doctor finish() helper without
 // adding new top-level commands — doctor stays the single entry point.
-func doctorCrewReachabilitySummary(crew string) (CrewReachabilityMatrix, string, error) {
-	if crew == "" {
+func doctorCrewReachabilitySummary(pond string) (CrewReachabilityMatrix, string, error) {
+	if pond == "" {
 		return CrewReachabilityMatrix{}, "", nil
 	}
 	claims, err := listLeaseClaims()
 	if err != nil {
 		return CrewReachabilityMatrix{}, "", err
 	}
-	matches := filterClaimsForCrew(claims, crew, "")
+	matches := filterClaimsForCrew(claims, pond, "")
 	peers := make([]BridgePeer, 0, len(matches))
 	for _, claim := range matches {
 		peers = append(peers, bridgePeerFromClaim(claim, providerTransportClass(claim.Provider)))
@@ -319,7 +319,7 @@ func doctorCrewReachabilitySummary(crew string) (CrewReachabilityMatrix, string,
 		}
 		return peers[i].Slug < peers[j].Slug
 	})
-	matrix := buildCrewReachabilityMatrix(crew, peers)
+	matrix := buildCrewReachabilityMatrix(pond, peers)
 	var buf strings.Builder
 	renderCrewReachabilityMatrix(&buf, matrix)
 	return matrix, buf.String(), nil

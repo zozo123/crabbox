@@ -29,7 +29,7 @@ const (
 )
 
 // resolveTailnetAPIURL returns the base URL of the tailnet REST API the CLI
-// should talk to for crew ACL bootstrap. Trailing slashes are stripped so the
+// should talk to for pond ACL bootstrap. Trailing slashes are stripped so the
 // callers can append paths without thinking about it.
 func resolveTailnetAPIURL() string {
 	for _, v := range []string{os.Getenv(crabboxTailnetAPIURLEnvVar), os.Getenv(tailnetAPIURLEnvVar)} {
@@ -43,8 +43,8 @@ func resolveTailnetAPIURL() string {
 // ErrCrewACLAutoBootstrapUnavailable is returned when the configured tailnet
 // control plane (e.g. Headscale) does not expose a Tailscale-compatible
 // policy REST API. Callers fall back to the manual snippet in
-// docs/features/crew.md instead of failing the lease creation.
-var ErrCrewACLAutoBootstrapUnavailable = errors.New("crew acl: auto-bootstrap unavailable on this control plane")
+// docs/features/pond.md instead of failing the lease creation.
+var ErrCrewACLAutoBootstrapUnavailable = errors.New("pond acl: auto-bootstrap unavailable on this control plane")
 
 // crewACLMaxAttempts caps the GET → merge → PUT loop. The first 412 from PUT
 // almost always reflects a benign concurrent edit (another operator running
@@ -56,7 +56,7 @@ const crewACLMaxAttempts = 2
 // errCrewACLPreconditionFailed is returned by PutPolicy when the server
 // rejected the write with HTTP 412 (ETag mismatch). It is wrapped so callers
 // can detect the race via errors.Is and decide whether to retry.
-var errCrewACLPreconditionFailed = errors.New("crew acl: tailnet policy changed during update (ETag mismatch)")
+var errCrewACLPreconditionFailed = errors.New("pond acl: tailnet policy changed during update (ETag mismatch)")
 
 // crewTailnetACLClient is satisfied by anything that can read and update the
 // tailnet policy file. The real implementation hits the Tailscale API; tests
@@ -70,7 +70,7 @@ type crewTailnetACLClient interface {
 // API key is available so callers can fall through to the manual-setup path.
 var crewTailnetACLClientFactory = newCrewTailnetACLClient
 
-// crewACLEnsure makes sure the concrete crew tag is declared in tagOwners and
+// crewACLEnsure makes sure the concrete pond tag is declared in tagOwners and
 // covered by a self-peering grant on the operator's tailnet. It is a no-op
 // when the rows are already present. When changes are needed the function
 // reads the current policy with an ETag, parses it as JSON, merges in the
@@ -81,13 +81,13 @@ var crewTailnetACLClientFactory = newCrewTailnetACLClient
 // constructs (line comments, trailing commas) that the standard JSON parser
 // cannot decode, it returns a clear error so the caller falls back to the
 // existing manual snippet instead of risking a destructive overwrite.
-func crewACLEnsure(ctx context.Context, client crewTailnetACLClient, tailnet, owner, crew string) error {
+func crewACLEnsure(ctx context.Context, client crewTailnetACLClient, tailnet, owner, pond string) error {
 	if client == nil {
-		return fmt.Errorf("crew acl client unavailable")
+		return fmt.Errorf("pond acl client unavailable")
 	}
-	tag := crewTailscaleTag(owner, crew)
+	tag := crewTailscaleTag(owner, pond)
 	if tag == "" {
-		return fmt.Errorf("crew acl: empty tag (owner=%q crew=%q)", owner, crew)
+		return fmt.Errorf("pond acl: empty tag (owner=%q pond=%q)", owner, pond)
 	}
 	if tailnet == "" {
 		tailnet = "-"
@@ -98,7 +98,7 @@ func crewACLEnsure(ctx context.Context, client crewTailnetACLClient, tailnet, ow
 		body, etag, err := client.GetPolicy(getCtx, tailnet)
 		cancelGet()
 		if err != nil {
-			return fmt.Errorf("crew acl: read policy: %w", err)
+			return fmt.Errorf("pond acl: read policy: %w", err)
 		}
 		if crewACLRowPresent(body, tag) {
 			return nil
@@ -123,13 +123,13 @@ func crewACLEnsure(ctx context.Context, client crewTailnetACLClient, tailnet, ow
 			if attempt < crewACLMaxAttempts {
 				continue
 			}
-			return fmt.Errorf("crew acl: ETag race persisted after %d attempts: %w", crewACLMaxAttempts, lastPutErr)
+			return fmt.Errorf("pond acl: ETag race persisted after %d attempts: %w", crewACLMaxAttempts, lastPutErr)
 		}
-		return fmt.Errorf("crew acl: update policy: %w", err)
+		return fmt.Errorf("pond acl: update policy: %w", err)
 	}
 	// Defensive: the loop body always returns or continues; reaching here
 	// would indicate a bug in the loop bounds.
-	return fmt.Errorf("crew acl: ETag race persisted after %d attempts: %w", crewACLMaxAttempts, lastPutErr)
+	return fmt.Errorf("pond acl: ETag race persisted after %d attempts: %w", crewACLMaxAttempts, lastPutErr)
 }
 
 // crewACLMergePolicy parses the policy as JSON, ensures both the tagOwners
@@ -139,11 +139,11 @@ func crewACLEnsure(ctx context.Context, client crewTailnetACLClient, tailnet, ow
 func crewACLMergePolicy(body, tag string) (string, error) {
 	trimmed := strings.TrimSpace(body)
 	if trimmed == "" {
-		return "", fmt.Errorf("crew acl: empty policy body")
+		return "", fmt.Errorf("pond acl: empty policy body")
 	}
 	var policy map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(trimmed), &policy); err != nil {
-		return "", fmt.Errorf("crew acl: cannot merge non-JSON policy (add the tag:cbx-crew-... rows manually): %w", err)
+		return "", fmt.Errorf("pond acl: cannot merge non-JSON policy (add the tag:cbx-pond-... rows manually): %w", err)
 	}
 	if policy == nil {
 		policy = map[string]json.RawMessage{}
@@ -153,7 +153,7 @@ func crewACLMergePolicy(body, tag string) (string, error) {
 	tagOwners := map[string]json.RawMessage{}
 	if raw, ok := policy["tagOwners"]; ok && len(raw) > 0 {
 		if err := json.Unmarshal(raw, &tagOwners); err != nil {
-			return "", fmt.Errorf("crew acl: cannot parse tagOwners: %w", err)
+			return "", fmt.Errorf("pond acl: cannot parse tagOwners: %w", err)
 		}
 	}
 	if _, ok := tagOwners[tag]; !ok {
@@ -174,7 +174,7 @@ func crewACLMergePolicy(body, tag string) (string, error) {
 	if raw, ok := policy["grants"]; ok && len(raw) > 0 {
 		var grants []map[string]json.RawMessage
 		if err := json.Unmarshal(raw, &grants); err != nil {
-			return "", fmt.Errorf("crew acl: cannot parse grants: %w", err)
+			return "", fmt.Errorf("pond acl: cannot parse grants: %w", err)
 		}
 		grants = append(grants, crewGrantEntry(tag))
 		updatedGrants, err := json.Marshal(grants)
@@ -186,7 +186,7 @@ func crewACLMergePolicy(body, tag string) (string, error) {
 		var acls []map[string]json.RawMessage
 		if raw, ok := policy["acls"]; ok && len(raw) > 0 {
 			if err := json.Unmarshal(raw, &acls); err != nil {
-				return "", fmt.Errorf("crew acl: cannot parse acls: %w", err)
+				return "", fmt.Errorf("pond acl: cannot parse acls: %w", err)
 			}
 		}
 		acls = append(acls, crewACLEntry(tag))

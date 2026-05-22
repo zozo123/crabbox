@@ -5,18 +5,18 @@ import (
 )
 
 // crewLabelKey is the reserved provider-label key used to group leases into a
-// crew. The key is part of the provider label index that every direct and
-// brokered backend already writes, so `list --crew <name>` can select peers
+// pond. The key is part of the provider label index that every direct and
+// brokered backend already writes, so `list --pond <name>` can select peers
 // without growing a new verb tree.
 //
-// The label is emergent: there is no top-level crew object. A crew exists for
+// The label is emergent: there is no top-level pond object. A pond exists for
 // as long as at least one active lease carries this label.
-const crewLabelKey = "crew"
+const crewLabelKey = "pond"
 
-// crewTailscaleTagPrefix is the ACL tag namespace used for crew peers. Every
-// member of crew `<name>` owned by `<owner>` is advertised as
-// `tag:cbx-crew-<owner>-<name>` so one concrete ACL row gates that crew.
-const crewTailscaleTagPrefix = "tag:cbx-crew-"
+// crewTailscaleTagPrefix is the ACL tag namespace used for pond peers. Every
+// member of pond `<name>` owned by `<owner>` is advertised as
+// `tag:cbx-pond-<owner>-<name>` so one concrete ACL row gates that pond.
+const crewTailscaleTagPrefix = "tag:cbx-pond-"
 
 // crewHostsFile is written on every Tailscale-capable Linux peer. A timer
 // refreshes it and a managed /etc/hosts block every 30s from the box-local
@@ -25,20 +25,20 @@ const crewTailscaleTagPrefix = "tag:cbx-crew-"
 const crewHostsFile = "/etc/hosts.cbx"
 
 // crewHostsRefreshPeriod is the refresh cadence baked into the systemd timer
-// that rewrites crew host entries. Kept low so a new peer is discoverable
+// that rewrites pond host entries. Kept low so a new peer is discoverable
 // within a single user-visible interaction window.
 const crewHostsRefreshPeriod = "30s"
 
 // maxRequestedCrewNameLength bounds the user-visible portion of the label.
 // Provider label values are already capped at 63 characters by
 // sanitizeProviderLabelValue; we use a stricter limit here so the same name
-// also fits inside future hostname-derived identifiers (e.g. `<crew>.<peer>`)
+// also fits inside future hostname-derived identifiers (e.g. `<pond>.<peer>`)
 // without truncation.
 const maxRequestedCrewNameLength = 41
 
-// maxCrewTailscaleTagOwnerLength bounds the owner segment of the crew ACL
-// tag. Tailscale tags are limited to 63 characters; with the `tag:cbx-crew-`
-// prefix (14 chars) and the crew name suffix (up to 41 chars plus a `-`
+// maxCrewTailscaleTagOwnerLength bounds the owner segment of the pond ACL
+// tag. Tailscale tags are limited to 63 characters; with the `tag:cbx-pond-`
+// prefix (14 chars) and the pond name suffix (up to 41 chars plus a `-`
 // separator) we reserve seven characters for the owner. The owner is
 // derived from the operator's git email local-part and truncated rather than
 // rejected so the same email shape works for personal and shared tailnets.
@@ -46,7 +46,7 @@ const maxCrewTailscaleTagOwnerLength = 7
 
 // normalizeCrewName lowercases the requested name and replaces every character
 // outside `[a-z0-9-]` with `-`, collapsing runs and trimming leading/trailing
-// dashes. The shape matches normalizeLeaseSlug; crew names participate in the
+// dashes. The shape matches normalizeLeaseSlug; pond names participate in the
 // same DNS-ish identifier space so peer hostnames stay regular.
 func normalizeCrewName(value string) string {
 	value = strings.ToLower(strings.TrimSpace(value))
@@ -67,24 +67,24 @@ func normalizeCrewName(value string) string {
 	return strings.Trim(out.String(), "-")
 }
 
-// requestedCrewName validates a user-supplied `--crew <name>` flag value.
-// Empty input is allowed: callers treat that as "no crew assignment".
+// requestedCrewName validates a user-supplied `--pond <name>` flag value.
+// Empty input is allowed: callers treat that as "no pond assignment".
 func requestedCrewName(value string) (string, error) {
 	if strings.TrimSpace(value) == "" {
 		return "", nil
 	}
 	name := normalizeCrewName(value)
 	if name == "" {
-		return "", exit(2, "--crew must contain at least one letter or digit")
+		return "", exit(2, "--pond must contain at least one letter or digit")
 	}
 	if len(name) > maxRequestedCrewNameLength {
-		return "", exit(2, "--crew must be %d characters or fewer after normalization", maxRequestedCrewNameLength)
+		return "", exit(2, "--pond must be %d characters or fewer after normalization", maxRequestedCrewNameLength)
 	}
 	return name, nil
 }
 
-// serverCrew returns the crew label value attached to a server, normalized for
-// comparison. Servers without a crew label return the empty string.
+// serverCrew returns the pond label value attached to a server, normalized for
+// comparison. Servers without a pond label return the empty string.
 func serverCrew(server Server) string {
 	if server.Labels == nil {
 		return ""
@@ -92,17 +92,17 @@ func serverCrew(server Server) string {
 	return normalizeCrewName(server.Labels[crewLabelKey])
 }
 
-// filterServersByCrew returns the subset of servers whose crew label matches
-// the requested name. The filter is a no-op when crew is empty so callers can
-// pass `--crew` through unconditionally.
-func filterServersByCrew(servers []Server, crew string) []Server {
-	crew = normalizeCrewName(crew)
-	if crew == "" {
+// filterServersByCrew returns the subset of servers whose pond label matches
+// the requested name. The filter is a no-op when pond is empty so callers can
+// pass `--pond` through unconditionally.
+func filterServersByCrew(servers []Server, pond string) []Server {
+	pond = normalizeCrewName(pond)
+	if pond == "" {
 		return servers
 	}
 	out := make([]Server, 0, len(servers))
 	for _, server := range servers {
-		if serverCrew(server) == crew {
+		if serverCrew(server) == pond {
 			out = append(out, server)
 		}
 	}
@@ -130,24 +130,24 @@ func crewTagOwner(identity string) string {
 	return owner
 }
 
-// crewTailscaleTag renders the ACL tag advertised by every crew peer. Returns
+// crewTailscaleTag renders the ACL tag advertised by every pond peer. Returns
 // "" when either argument is empty so callers can compose the value
-// unconditionally and skip emission when the lease is not actually a crew
+// unconditionally and skip emission when the lease is not actually a pond
 // member.
-func crewTailscaleTag(owner, crew string) string {
+func crewTailscaleTag(owner, pond string) string {
 	owner = crewTagOwner(owner)
 	if owner == "" {
 		owner = "user"
 	}
-	crew = normalizeCrewName(crew)
-	if crew == "" {
+	pond = normalizeCrewName(pond)
+	if pond == "" {
 		return ""
 	}
-	return crewTailscaleTagPrefix + owner + "-" + crew
+	return crewTailscaleTagPrefix + owner + "-" + pond
 }
 
-// appendCrewTailscaleTag mutates cfg.Tailscale.Tags to include the crew tag
-// when both `--crew` and Tailscale are in play. The mint happens entirely in
+// appendCrewTailscaleTag mutates cfg.Tailscale.Tags to include the pond tag
+// when both `--pond` and Tailscale are in play. The mint happens entirely in
 // user (CLI) context: the same auth key the operator already supplies is
 // re-used with one extra advertised tag, so the broker never sees a
 // Tailscale credential. No-op when the provider lacks FeatureTailscale or
@@ -156,7 +156,7 @@ func appendCrewTailscaleTag(cfg *Config, providerSupportsTailscale bool) {
 	if cfg == nil || !cfg.Tailscale.Enabled || !providerSupportsTailscale {
 		return
 	}
-	tag := crewTailscaleTag(localCoordinatorOwner(), cfg.Crew)
+	tag := crewTailscaleTag(localCoordinatorOwner(), cfg.Pond)
 	if tag == "" {
 		return
 	}

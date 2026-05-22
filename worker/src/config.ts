@@ -76,7 +76,7 @@ export interface LeaseConfig {
   idleTimeoutSeconds: number;
   keep: boolean;
   sshPublicKey: string;
-  crew: string;
+  pond: string;
 }
 
 export type AzureOSDiskMode = "managed" | "ephemeral";
@@ -200,13 +200,13 @@ export function leaseConfig(input: LeaseRequest, defaults: LeaseConfigDefaults =
     idleTimeoutSeconds,
     keep: input.keep ?? false,
     sshPublicKey,
-    crew: normalizeCrewName(input.crew ?? ""),
+    pond: normalizeCrewName(input.pond ?? ""),
   };
 }
 
-// normalizeCrewName mirrors the Go-side helper in internal/cli/crew.go. The
-// `crew` label is a reserved provider-label key that groups N leases so peers
-// can be selected by `crabbox list --crew <name>`.
+// normalizeCrewName mirrors the Go-side helper in internal/cli/pond.go. The
+// `pond` label is a reserved provider-label key that groups N leases so peers
+// can be selected by `crabbox list --pond <name>`.
 export function normalizeCrewName(value: string): string {
   return value
     .toLowerCase()

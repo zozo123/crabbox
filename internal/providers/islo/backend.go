@@ -354,7 +354,7 @@ func (b *isloBackend) createSandbox(ctx context.Context, client isloAPI, repo Re
 		_ = client.DeleteSandbox(context.Background(), sandbox.GetName())
 		return "", "", "", err
 	}
-	if err := claimLeaseForRepoProviderWithCrew(leaseID, slug, isloProvider, b.cfg.Crew, repo.Root, b.cfg.IdleTimeout, reclaim); err != nil {
+	if err := claimLeaseForRepoProviderWithCrew(leaseID, slug, isloProvider, b.cfg.Pond, repo.Root, b.cfg.IdleTimeout, reclaim); err != nil {
 		_ = client.DeleteSandbox(context.Background(), sandbox.GetName())
 		return "", "", "", err
 	}
@@ -480,8 +480,8 @@ func applyIsloClaimLabels(labels map[string]string, leaseID string) {
 	if claim.Slug != "" {
 		labels["slug"] = normalizeLeaseSlug(claim.Slug)
 	}
-	if claim.Crew != "" {
-		labels["crew"] = claim.Crew
+	if claim.Pond != "" {
+		labels["pond"] = claim.Pond
 	}
 }
 

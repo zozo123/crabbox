@@ -1,4 +1,4 @@
-# Crew
+# Pond
 
 Read when:
 
@@ -6,54 +6,54 @@ Read when:
 - you want `crabbox list` to show only the leases that belong to a group;
 - you want peers in a group to reach each other by name on the tailnet.
 
-A **crew** is a named set of Crabbox leases that should discover each other.
-The name is stored on each lease as a reserved provider label (`crew=<name>`) at
+A **pond** is a named set of Crabbox leases that should discover each other.
+The name is stored on each lease as a reserved provider label (`pond=<name>`) at
 provision time.
-There is no separate top-level crew object: a crew exists for as long as at
+There is no separate top-level pond object: a pond exists for as long as at
 least one active lease carries the label, and disappears when the last member
 is released. The primitive stays emergent and observable through the
 provider-label index the coordinator and direct backends already use.
 
 ## Selector
 
-A reserved label key `crew` on every lease record.
+A reserved label key `pond` on every lease record.
 
 ```sh
-crabbox warmup --crew alpha --slug db
-crabbox warmup --crew alpha --slug web
-crabbox warmup --crew alpha --slug worker
+crabbox warmup --pond alpha --slug db
+crabbox warmup --pond alpha --slug web
+crabbox warmup --pond alpha --slug worker
 ```
 
-Each command tags its new lease with `crew=alpha` alongside the existing
+Each command tags its new lease with `pond=alpha` alongside the existing
 `slug`, `provider`, `class`, and `state` labels. The label is sanitized the
 same way as other provider labels and is bounded to 41 characters before
 sanitization so the same name fits inside hostname-derived identifiers
 (`<slug>.cbx` peer entries).
 
 ```sh
-crabbox list --crew alpha
-crabbox list --crew alpha --json
+crabbox list --pond alpha
+crabbox list --pond alpha --json
 ```
 
-The crew label is opt-in. Leases created without `--crew` carry no crew label
+The pond label is opt-in. Leases created without `--pond` carry no pond label
 and are unaffected.
 
 ## Peer discovery on the tailnet
 
-When `--crew` is combined with `--tailscale` on a Tailscale-capable provider
+When `--pond` is combined with `--tailscale` on a Tailscale-capable provider
 (Hetzner, Azure, GCP managed Linux), the CLI advertises one extra ACL tag
 when the box joins the tailnet:
 
 ```
-tag:cbx-crew-<owner>-<crew>
+tag:cbx-pond-<owner>-<pond>
 ```
 
 The `<owner>` segment is derived from the operator's git email (local-part,
 truncated for tag length). The mint happens entirely in user (CLI) context —
 the broker never sees a Tailscale credential.
 
-Each crew member writes `/etc/hosts.cbx` from its own `tailscale status
---json` output, filtered by the crew tag. The same systemd timer also
+Each pond member writes `/etc/hosts.cbx` from its own `tailscale status
+--json` output, filtered by the pond tag. The same systemd timer also
 maintains a Crabbox-owned block in `/etc/hosts`, so normal system resolution
 can find peers as `<slug>.cbx`:
 
@@ -68,26 +68,26 @@ slugs are role-shaped (`db`, `web`, `worker`).
 
 For providers without `FeatureTailscale` (E2B, Modal, Cloudflare, Railway,
 Islo, Tensorlake, Blacksmith, exe.dev, SSH, Proxmox, Sprites, Daytona,
-namespace-devbox), the crew label still sticks for `list --crew`, but the
-networking plane is unavailable. `crabbox doctor --crew <name>` flags this with
-`skip crew provider=<name> does not support the Tailscale plane`.
+namespace-devbox), the pond label still sticks for `list --pond`, but the
+networking plane is unavailable. `crabbox doctor --pond <name>` flags this with
+`skip pond provider=<name> does not support the Tailscale plane`.
 
 ## Example: two-lease web server demo
 
-End-to-end smoke that proves a crew is wired up. Each terminal runs from the
+End-to-end smoke that proves a pond is wired up. Each terminal runs from the
 same operator shell so `crabbox` shares the local claim store.
 
 Terminal 1 — start the server:
 
 ```sh
-crabbox warmup --crew demo --slug web --provider hetzner
+crabbox warmup --pond demo --slug web --provider hetzner
 crabbox ssh demo-web -- 'python3 -m http.server 8080'
 ```
 
 Terminal 2 — hit it from a peer:
 
 ```sh
-crabbox warmup --crew demo --slug client --provider hetzner
+crabbox warmup --pond demo --slug client --provider hetzner
 crabbox ssh demo-client -- 'curl --max-time 5 http://web.cbx:8080'
 # expect HTTP 200 with the python directory listing
 ```
@@ -95,40 +95,40 @@ crabbox ssh demo-client -- 'curl --max-time 5 http://web.cbx:8080'
 Cleanup:
 
 ```sh
-crabbox release --crew demo
+crabbox release --pond demo
 ```
 
 The `.cbx` peer name resolves through the managed `/etc/hosts` block that the
-crew-hosts systemd timer maintains on every Tailscale-capable peer.
+pond-hosts systemd timer maintains on every Tailscale-capable peer.
 
 ## Auto-bootstrap of the tailnet policy
 
 When `TS_API_KEY` is exported in the operator shell, the CLI self-bootstraps
-the `tag:cbx-crew-<owner>-<crew>` rows on the first `run` or `warmup` for a
-new crew: it reads the live policy with an ETag, merges the missing
+the `tag:cbx-pond-<owner>-<pond>` rows on the first `run` or `warmup` for a
+new pond: it reads the live policy with an ETag, merges the missing
 `tagOwners` and self-peering grant, and PUTs the result back with `If-Match`
 so a concurrent edit fails fast. Subsequent leases hit a cached row and
-no-op. `crabbox doctor --crew <name>` reports `auto-managed` in that mode.
+no-op. `crabbox doctor --pond <name>` reports `auto-managed` in that mode.
 
 If you cannot expose `TS_API_KEY` to the CLI (e.g. shared tailnet,
 locked-down policy editing), fall back to the manual snippet below.
 
 ## One-time tailnet setup (only if `TS_API_KEY` is not available)
 
-The crew plane needs a `tag:cbx-crew-<owner>-<crew>` entry in your tailnet
+The pond plane needs a `tag:cbx-pond-<owner>-<pond>` entry in your tailnet
 policy file (Tailscale admin console -> Access Controls) plus one access row
 that opens peer-to-peer traffic for that tag. Tailscale's policy schema
 requires every advertised tag to be declared in `tagOwners` by its concrete
-name (no wildcards), so add one entry per `<crew>` you intend to ship:
+name (no wildcards), so add one entry per `<pond>` you intend to ship:
 
 ```hujson
 {
   "tagOwners": {
-    "tag:cbx-crew-yossi-e-alpha": ["autogroup:admin"],
+    "tag:cbx-pond-yossi-e-alpha": ["autogroup:admin"],
   },
   "grants": [
-    { "src": ["tag:cbx-crew-yossi-e-alpha"],
-      "dst": ["tag:cbx-crew-yossi-e-alpha"],
+    { "src": ["tag:cbx-pond-yossi-e-alpha"],
+      "dst": ["tag:cbx-pond-yossi-e-alpha"],
       "ip": ["*"] },
   ],
 }
@@ -139,41 +139,41 @@ Tailnets still using legacy ACLs can express the same rule as:
 ```hujson
 {
   "tagOwners": {
-    "tag:cbx-crew-yossi-e-alpha": ["autogroup:admin"],
+    "tag:cbx-pond-yossi-e-alpha": ["autogroup:admin"],
   },
   "acls": [
     { "action": "accept",
-      "src": ["tag:cbx-crew-yossi-e-alpha"],
-      "dst": ["tag:cbx-crew-yossi-e-alpha:*"] },
+      "src": ["tag:cbx-pond-yossi-e-alpha"],
+      "dst": ["tag:cbx-pond-yossi-e-alpha:*"] },
   ],
 }
 ```
 
 `<owner>` is the first seven characters of the operator's git email
-local-part — `yossi.eliaz@incredibuild.com` becomes `yossi-e`. `<crew>` is
-the normalized name you pass to `--crew`. The doctor check verifies the
+local-part — `yossi.eliaz@incredibuild.com` becomes `yossi-e`. `<pond>` is
+the normalized name you pass to `--pond`. The doctor check verifies the
 concrete tag declaration and matching peer-to-peer grants or ACL row for the
-crew you ask it to inspect.
+pond you ask it to inspect.
 
 The plane stays operator-owned: the broker is a leaf and never holds
 Tailscale policy-edit credentials. When `TS_API_KEY` is set in the operator
 shell, the CLI uses it to (a) self-bootstrap the row on the first lease in
-each new crew and (b) verify it on `crabbox doctor --crew <name>`. Without
+each new pond and (b) verify it on `crabbox doctor --pond <name>`. Without
 that env var the auto-bootstrap is skipped silently and the doctor check
 falls back to a hint pointing at the manual snippet above. Plain `crabbox
-doctor` does not call the Tailscale ACL API unless a crew is explicitly
+doctor` does not call the Tailscale ACL API unless a pond is explicitly
 selected.
 
 ```sh
 export TS_API_KEY=tskey-api-XXXXXXXXXX
 export TS_TAILNET=example.com   # optional; defaults to '-' (the API key's tailnet)
-crabbox doctor --provider hetzner --crew alpha
+crabbox doctor --provider hetzner --pond alpha
 ```
 
 ## Self-hosted control plane (Headscale, others)
 
-Crew's network plane uses the Tailscale client (installed by cloud-init); it
-does not depend on who runs the control server. To point a crew at
+Pond's network plane uses the Tailscale client (installed by cloud-init); it
+does not depend on who runs the control server. To point a pond at
 [Headscale](https://github.com/juanfont/headscale) or another self-hosted
 control plane, set both the client and admin endpoints before running
 `crabbox`:
@@ -182,7 +182,7 @@ control plane, set both the client and admin endpoints before running
 export TS_CONTROL_URL=https://headscale.example.com   # client login server
 export TS_API_URL=https://headscale.example.com       # admin API base (used by crabbox)
 export TS_API_KEY=<your control-server admin token>
-crabbox warmup --crew alpha --provider hetzner --tailscale
+crabbox warmup --pond alpha --provider hetzner --tailscale
 ```
 
 `TS_CONTROL_URL` is forwarded into cloud-init and passed to `tailscale up`
@@ -190,12 +190,12 @@ as `--login-server`, so the lease registers against the self-hosted control
 plane. `CRABBOX_TS_API_URL` is honored first if both are set, which lets you
 keep `TS_API_URL` pointed elsewhere for other tooling.
 
-Auto-bootstrap of the `tag:cbx-crew-*` policy row targets the Tailscale-shaped
+Auto-bootstrap of the `tag:cbx-pond-*` policy row targets the Tailscale-shaped
 `/api/v2/tailnet/-/acl` route. Headscale's policy endpoint
 (`/api/v1/policy`) is not byte-compatible with that shape — it wraps the
 policy as a quoted string field and does not return an ETag — so the CLI
 detects the missing route (HTTP 404 or no `ETag` header on the response) and
-falls back gracefully. `crabbox doctor --crew <name>` reports a `skip` with
+falls back gracefully. `crabbox doctor --pond <name>` reports a `skip` with
 the manual snippet pointer when this happens. For Headscale, apply the
 policy block from the section above via:
 
@@ -213,8 +213,8 @@ HTTP-only peer discovery on top of the provider's own ingress primitive.
 
 ## Bridge plane (cross-provider peer discovery)
 
-`crabbox crew peers --crew <name>` is the single command that lists every
-member of a crew with a transport hint, regardless of how that member is
+`crabbox pond peers --pond <name>` is the single command that lists every
+member of a pond with a transport hint, regardless of how that member is
 hosted. It folds three planes into one view:
 
 - **Tailscale plane** for managed Linux providers (AWS / Azure / GCP /
@@ -254,11 +254,11 @@ share registry (so calls are idempotent), and surfaces them as
 `BridgePeerTarget` rows.
 
 ```sh
-crabbox warmup --provider islo --crew bridge-demo --slug bridge-demo-web
-crabbox warmup --provider islo --crew bridge-demo --slug bridge-demo-client
+crabbox warmup --provider islo --pond bridge-demo --slug bridge-demo-web
+crabbox warmup --provider islo --pond bridge-demo --slug bridge-demo-client
 
-# Publish a public URL for port 8080 on every member of the crew.
-crabbox crew peers --crew bridge-demo --share-port 8080 --json
+# Publish a public URL for port 8080 on every member of the pond.
+crabbox pond peers --pond bridge-demo --share-port 8080 --json
 ```
 
 The JSON output contains one `BridgePeer` per lease, each with a list of
@@ -305,12 +305,12 @@ per peer).
 
 ### Doctor reachability matrix
 
-`crabbox doctor --crew <name>` runs the existing Tailscale ACL check for
-the named crew and, in the same invocation, prints the per-transport
+`crabbox doctor --pond <name>` runs the existing Tailscale ACL check for
+the named pond and, in the same invocation, prints the per-transport
 reachability matrix derived from the unified peer list:
 
 ```
-crew "alpha": 4 members
+pond "alpha": 4 members
   transport breakdown: none=1 ssh=1 tailnet=1 url=1
   reachability:
     tailnet -> tailnet : OK
@@ -332,7 +332,7 @@ because Crabbox does not currently mesh SSH leases.
 ## Why a label, not a new object
 
 Crabbox's labels already drive cleanup, the portal lease list, broker
-filters, and machine identity. Putting the crew name in the same place makes
+filters, and machine identity. Putting the pond name in the same place makes
 the primitive observable, queryable, and removable through the same paths.
 The maintainer's recent PR #118 rewrite of exe.dev — from a custom transport
 into a normal SSH lease provider — set the rule the design follows: bend new
@@ -340,9 +340,9 @@ features into existing abstractions; do not grow parallel verb trees.
 
 ## Provider posture
 
-| Provider                                                            | `--crew` tagged | Peer DNS (`<slug>.cbx`)              | Tailscale ACL doctor check |
+| Provider                                                            | `--pond` tagged | Peer DNS (`<slug>.cbx`)              | Tailscale ACL doctor check |
 | ------------------------------------------------------------------- | --------------- | ------------------------------------ | -------------------------- |
-| Hetzner / Azure / GCP managed Linux                                 | yes             | yes (`/etc/hosts` managed block)     | yes, with `doctor --crew`  |
+| Hetzner / Azure / GCP managed Linux                                 | yes             | yes (`/etc/hosts` managed block)     | yes, with `doctor --pond`  |
 | AWS Linux / AWS Windows / AWS Mac                                   | yes             | follow-up                            | n/a (no `FeatureTailscale`)|
-| Proxmox / SSH / Daytona / Sprites / exe.dev / namespace-devbox      | yes             | n/a (non-managed tailnet)            | skip with `doctor --crew`  |
-| E2B / Modal / Cloudflare / Railway / Islo / Tensorlake / Blacksmith | yes             | n/a                                  | skip with `doctor --crew`  |
+| Proxmox / SSH / Daytona / Sprites / exe.dev / namespace-devbox      | yes             | n/a (non-managed tailnet)            | skip with `doctor --pond`  |
+| E2B / Modal / Cloudflare / Railway / Islo / Tensorlake / Blacksmith | yes             | n/a                                  | skip with `doctor --pond`  |

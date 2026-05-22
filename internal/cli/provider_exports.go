@@ -47,15 +47,15 @@ func ClaimLeaseForRepoProviderScope(leaseID, slug, provider, providerScope, repo
 	return claimLeaseForRepoProviderScope(leaseID, slug, provider, providerScope, repoRoot, idleTimeout, reclaim)
 }
 
-func ClaimLeaseForRepoProviderWithCrew(leaseID, slug, provider, crew, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
-	return claimLeaseForRepoProviderWithCrew(leaseID, slug, provider, crew, repoRoot, idleTimeout, reclaim)
+func ClaimLeaseForRepoProviderWithCrew(leaseID, slug, provider, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
+	return claimLeaseForRepoProviderWithCrew(leaseID, slug, provider, pond, repoRoot, idleTimeout, reclaim)
 }
 
-// ClaimLeaseForRepoProviderCrew is the crew-aware variant exposed for
-// delegated providers that need to persist the crew label in the local claim
+// ClaimLeaseForRepoProviderCrew is the pond-aware variant exposed for
+// delegated providers that need to persist the pond label in the local claim
 // sidecar (delegated providers do not own a provider-side label store).
-func ClaimLeaseForRepoProviderCrew(leaseID, slug, provider, crew, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
-	return claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, "", crew, repoRoot, idleTimeout, reclaim)
+func ClaimLeaseForRepoProviderCrew(leaseID, slug, provider, pond, repoRoot string, idleTimeout time.Duration, reclaim bool) error {
+	return claimLeaseForRepoProviderScopeCrew(leaseID, slug, provider, "", pond, repoRoot, idleTimeout, reclaim)
 }
 
 func ResolveLeaseClaim(identifier string) (LeaseClaim, bool, error) {
