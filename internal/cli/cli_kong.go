@@ -21,6 +21,7 @@ type crabboxKongCLI struct {
 	Prewarm    prewarmKongCmd    `cmd:"" passthrough:"" help:"Lease and hydrate a reusable test-ready box."`
 	Run        runKongCmd        `cmd:"" passthrough:"" help:"Sync the repo, run a remote command, stream output."`
 	Job        jobKongCmd        `cmd:"" help:"Run named repo-local Crabbox jobs."`
+	Station    stationKongCmd    `cmd:"" help:"Supervise a long-running workload on an SSH lease."`
 	Desktop    desktopKongCmd    `cmd:"" help:"Launch apps into a visible desktop session."`
 	Media      mediaKongCmd      `cmd:"" help:"Create preview artifacts from recorded desktop videos."`
 	Artifacts  artifactsKongCmd  `cmd:"" help:"Collect, transform, and publish QA artifacts."`
@@ -123,7 +124,7 @@ func normalizeKongHelpArgs(args []string) []string {
 
 func isKongCommandGroup(command string) bool {
 	switch command {
-	case "actions", "admin", "artifacts", "azure", "cache", "capsule", "checkpoint", "config", "pond", "desktop", "image", "job", "machine", "media", "pool":
+	case "actions", "admin", "artifacts", "azure", "cache", "capsule", "checkpoint", "config", "pond", "desktop", "image", "job", "machine", "media", "pool", "station":
 		return true
 	default:
 		return false
@@ -162,6 +163,24 @@ type jobListKongCmd struct {
 	Args []string `arg:"" optional:""`
 }
 type jobRunKongCmd struct {
+	Args []string `arg:"" optional:""`
+}
+type stationKongCmd struct {
+	Start  stationStartKongCmd  `cmd:"" passthrough:"" help:"Start a supervised long-running workload."`
+	Status stationStatusKongCmd `cmd:"" passthrough:"" help:"Show station state."`
+	Logs   stationLogsKongCmd   `cmd:"" passthrough:"" help:"Print station logs."`
+	Stop   stationStopKongCmd   `cmd:"" passthrough:"" help:"Stop a station workload."`
+}
+type stationStartKongCmd struct {
+	Args []string `arg:"" optional:""`
+}
+type stationStatusKongCmd struct {
+	Args []string `arg:"" optional:""`
+}
+type stationLogsKongCmd struct {
+	Args []string `arg:"" optional:""`
+}
+type stationStopKongCmd struct {
 	Args []string `arg:"" optional:""`
 }
 type syncPlanKongCmd struct {
@@ -541,16 +560,28 @@ type pondReleaseKongCmd struct {
 
 type versionKongCmd struct{}
 
-func (c *initKongCmd) Run(ctx context.Context, app App) error      { return app.initProject(ctx, c.Args) }
-func (c *loginKongCmd) Run(ctx context.Context, app App) error     { return app.login(ctx, c.Args) }
-func (c *logoutKongCmd) Run(ctx context.Context, app App) error    { return app.logout(ctx, c.Args) }
-func (c *whoamiKongCmd) Run(ctx context.Context, app App) error    { return app.whoami(ctx, c.Args) }
-func (c *doctorKongCmd) Run(ctx context.Context, app App) error    { return app.doctor(ctx, c.Args) }
-func (c *warmupKongCmd) Run(ctx context.Context, app App) error    { return app.warmup(ctx, c.Args) }
-func (c *prewarmKongCmd) Run(ctx context.Context, app App) error   { return app.prewarm(ctx, c.Args) }
-func (c *runKongCmd) Run(ctx context.Context, app App) error       { return app.runCommand(ctx, c.Args) }
-func (c *jobListKongCmd) Run(ctx context.Context, app App) error   { return app.jobList(ctx, c.Args) }
-func (c *jobRunKongCmd) Run(ctx context.Context, app App) error    { return app.jobRun(ctx, c.Args) }
+func (c *initKongCmd) Run(ctx context.Context, app App) error    { return app.initProject(ctx, c.Args) }
+func (c *loginKongCmd) Run(ctx context.Context, app App) error   { return app.login(ctx, c.Args) }
+func (c *logoutKongCmd) Run(ctx context.Context, app App) error  { return app.logout(ctx, c.Args) }
+func (c *whoamiKongCmd) Run(ctx context.Context, app App) error  { return app.whoami(ctx, c.Args) }
+func (c *doctorKongCmd) Run(ctx context.Context, app App) error  { return app.doctor(ctx, c.Args) }
+func (c *warmupKongCmd) Run(ctx context.Context, app App) error  { return app.warmup(ctx, c.Args) }
+func (c *prewarmKongCmd) Run(ctx context.Context, app App) error { return app.prewarm(ctx, c.Args) }
+func (c *runKongCmd) Run(ctx context.Context, app App) error     { return app.runCommand(ctx, c.Args) }
+func (c *jobListKongCmd) Run(ctx context.Context, app App) error { return app.jobList(ctx, c.Args) }
+func (c *jobRunKongCmd) Run(ctx context.Context, app App) error  { return app.jobRun(ctx, c.Args) }
+func (c *stationStartKongCmd) Run(ctx context.Context, app App) error {
+	return app.stationStart(ctx, stripKongCommandPath(c.Args, "station", "start"))
+}
+func (c *stationStatusKongCmd) Run(ctx context.Context, app App) error {
+	return app.stationStatus(ctx, stripKongCommandPath(c.Args, "station", "status"))
+}
+func (c *stationLogsKongCmd) Run(ctx context.Context, app App) error {
+	return app.stationLogs(ctx, stripKongCommandPath(c.Args, "station", "logs"))
+}
+func (c *stationStopKongCmd) Run(ctx context.Context, app App) error {
+	return app.stationStop(ctx, stripKongCommandPath(c.Args, "station", "stop"))
+}
 func (c *syncPlanKongCmd) Run(ctx context.Context, app App) error  { return app.syncPlan(ctx, c.Args) }
 func (c *providersKongCmd) Run(ctx context.Context, app App) error { return app.providers(ctx, c.Args) }
 func (c *historyKongCmd) Run(ctx context.Context, app App) error   { return app.history(ctx, c.Args) }

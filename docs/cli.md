@@ -41,6 +41,8 @@ Commands are grouped here for orientation. Each links to its detailed page under
 crabbox warmup [lease flags]                 lease a box and wait until ready
 crabbox run -- <command...>                  sync, run a remote command, stream output
 crabbox run --pool <key> -- <command...>     borrow a hydrated ready-pool lease
+crabbox station start -- <command...>        supervise a long-running workload
+crabbox station status <station-id>          show station state and heartbeat
 crabbox status --id <id>                     show lease state (--wait to block)
 crabbox inspect --id <id>                     print lease/provider details
 crabbox list                                  list machines (alias: crabbox pool list)
@@ -52,6 +54,7 @@ crabbox pool ready [key]                      list hydrated broker ready-pool le
 ```
 
 See [warmup](commands/warmup.md), [run](commands/run.md),
+[station](commands/station.md),
 [status](commands/status.md), [inspect](commands/inspect.md),
 [list](commands/list.md), [share](commands/share.md),
 [unshare](commands/unshare.md), [stop](commands/stop.md),

@@ -156,6 +156,8 @@ Start Here:
       Lease a reusable box and hydrate it from configured GitHub Actions.
   crabbox run --id blue-lobster -- pnpm test:changed
       Sync this checkout to the box and run a command.
+  crabbox station start --command "scripts/watch-tests.sh"
+      Start a supervised long-running workload on a kept lease.
   crabbox warmup --desktop --browser --code
       Lease a UI-capable box with a browser and web code editor.
 
@@ -169,6 +171,7 @@ Commands:
   prewarm     Lease and hydrate a reusable test-ready box
   run         Sync the repo, run a remote command, stream output
   job         Run named repo-local Crabbox jobs
+  station     Supervise a long-running workload on an SSH lease
   desktop     Launch apps into a visible desktop session
   media       Create preview artifacts from recorded desktop videos
   artifacts   Collect, transform, and publish QA artifacts
@@ -211,6 +214,8 @@ Commands:
 Common Flows:
   crabbox run --class beast -- pnpm check
   crabbox job run openclaw-wsl2
+  crabbox station start --station-profile default --command "scripts/watch-tests.sh"
+  crabbox station status stn_abcdef1234567890
   crabbox warmup
   crabbox status --id blue-lobster --wait
   crabbox run --id blue-lobster --shell 'pnpm install --frozen-lockfile && pnpm test'

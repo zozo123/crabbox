@@ -17,6 +17,7 @@ same order as the CLI help.
 - [prewarm](prewarm.md)
 - [run](run.md)
 - [job](job.md)
+- [station](station.md)
 - [desktop](desktop.md)
 - [media](media.md)
 - [artifacts](artifacts.md)
