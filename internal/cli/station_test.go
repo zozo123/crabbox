@@ -61,8 +61,12 @@ func TestLastTimingReportSkipsProgressLines(t *testing.T) {
 }
 
 func TestStationRemoteStartCommandContainsSupervisorContract(t *testing.T) {
-	got := stationRemoteStartCommand("/work/repo/.crabbox/stations/stn_1", "stn_1", 1, "printf 'hello world'\n", 3600, 60)
+	got := stationRemoteStartCommand("/work/repo/.crabbox/stations/stn_1", "/work/repo", "stn_1", 1, "printf 'hello world'\n", 3600, 60)
 	for _, want := range []string{
+		"workdir=",
+		"/work/repo",
+		`cd "$workdir"`,
+		"workdir_unavailable",
 		"station.log",
 		"status.json",
 		"heartbeat",

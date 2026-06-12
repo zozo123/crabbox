@@ -352,7 +352,7 @@ func (a App) stationResolveTarget(ctx context.Context, provider, leaseID string)
 func (a App) stationStartRemoteSupervisor(ctx context.Context, target SSHTarget, record stationRecord, commandScript string) error {
 	ttlSecs := durationSeconds(record.TTL)
 	idleSecs := durationSeconds(record.IdleTimeout)
-	remote := stationRemoteStartCommand(record.RemoteDir, record.ID, record.Attempt, commandScript, ttlSecs, idleSecs)
+	remote := stationRemoteStartCommand(record.RemoteDir, record.Workdir, record.ID, record.Attempt, commandScript, ttlSecs, idleSecs)
 	if out, err := runSSHCombinedOutput(ctx, target, remote); err != nil {
 		if strings.TrimSpace(out) != "" {
 			return exit(7, "start station supervisor: %v: %s", err, strings.TrimSpace(out))
@@ -362,9 +362,10 @@ func (a App) stationStartRemoteSupervisor(ctx context.Context, target SSHTarget,
 	return nil
 }
 
-func stationRemoteStartCommand(remoteDir, stationID string, attempt int, commandScript string, ttlSecs, idleSecs int64) string {
+func stationRemoteStartCommand(remoteDir, workdir, stationID string, attempt int, commandScript string, ttlSecs, idleSecs int64) string {
 	script := `set -eu
 remote_dir=` + shellQuote(remoteDir) + `
+workdir=` + shellQuote(workdir) + `
 station_id=` + shellQuote(stationID) + `
 attempt=` + strconv.Itoa(attempt) + `
 command_script=` + shellQuote(commandScript) + `
@@ -404,6 +405,7 @@ write_status starting
 (
   set +e
   printf '[station] id=%s attempt=%s starting at %s\n' "$station_id" "$attempt" "$(now_utc)" >> "$log"
+  cd "$workdir" || { printf '[station] workdir unavailable: %s\n' "$workdir" >> "$log"; write_status failed workdir_unavailable 127; exit 127; }
   if command -v setsid >/dev/null 2>&1; then
     setsid "$remote_dir/command.sh" >> "$log" 2>&1 &
   else
