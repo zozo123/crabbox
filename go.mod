@@ -29,6 +29,7 @@ require (
 	github.com/lxc/incus/v7 v7.1.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
 	github.com/tailscale/hujson v0.0.0-20260302212456-ecc657c15afd
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/zitadel/oidc/v3 v3.47.5
 	golang.org/x/crypto v0.52.0
 	golang.org/x/oauth2 v0.36.0
