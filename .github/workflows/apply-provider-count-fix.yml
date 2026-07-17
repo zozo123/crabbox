@@ -170,3 +170,5 @@ jobs:
           git add scripts/build-docs-site.mjs scripts/build-docs-site.test.js
           git commit -m "fix(docs): count providers without index page"
           git push origin HEAD:fix/provider-navigation-count
+
+# Trigger after workflow registration.
