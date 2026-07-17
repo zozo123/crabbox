@@ -1,0 +1,12 @@
+id = "crabbox-snippets"
+name = "Crabbox"
+version = "0.1.0"
+schema_version = 1
+authors = ["Yossi Eliaz <yossi.eliaz@incredibuild.com>", "OpenClaw contributors"]
+description = "Snippets for Crabbox remote development workflows and configuration."
+repository = "https://github.com/openclaw/crabbox"
+snippets = [
+  "./snippets/shell script.json",
+  "./snippets/yaml.json",
+  "./snippets/markdown.json",
+]
