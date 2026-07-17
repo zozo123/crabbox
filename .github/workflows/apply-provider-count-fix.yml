@@ -1,0 +1,172 @@
+name: Apply provider count fix
+
+on:
+  push:
+    branches:
+      - fix/provider-navigation-count
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: fix/provider-navigation-count
+
+      - name: Set up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Apply source and regression-test changes
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected one match, found {count}")
+              return text.replace(old, new, 1)
+
+          build_path = Path("scripts/build-docs-site.mjs")
+          build = build_path.read_text()
+          build = replace_once(
+              build,
+              '''const providerMetadata = JSON.parse(
+            fs.readFileSync(path.join(docsDir, "providers", "provider-metadata.json"), "utf8"),
+          );
+          const providerMetadataByDocs = new Map(''',
+              '''const providerMetadata = JSON.parse(
+            fs.readFileSync(path.join(docsDir, "providers", "provider-metadata.json"), "utf8"),
+          );
+          const providerCount = Object.keys(providerMetadata).length;
+          const providerMetadataByDocs = new Map(''',
+              "declare canonical provider count",
+          )
+          build = replace_once(
+              build,
+              '["Providers", rels("providers")],',
+              '["Providers", rels("providers"), providerCount],',
+              "override Providers navigation count",
+          )
+          build = replace_once(
+              build,
+              '''const nav = sections
+            .map(([name, rels]) => ({
+              name,
+              pages: rels.map((rel) => pageMap.get(rel)).filter(Boolean),
+            }))
+            .filter((section) => section.pages.length);''',
+              '''const nav = sections
+            .map(([name, rels, count]) => {
+              const pages = rels.map((rel) => pageMap.get(rel)).filter(Boolean);
+              return { name, pages, count: count ?? pages.length };
+            })
+            .filter((section) => section.pages.length);''',
+              "carry semantic section counts",
+          )
+          build = replace_once(
+              build,
+              'Browse ${Object.keys(providerMetadata).length} providers',
+              'Browse ${providerCount} providers',
+              "reuse canonical provider count in CTA",
+          )
+          build = replace_once(
+              build,
+              '<span class="nav-count">${section.pages.length}</span>',
+              '<span class="nav-count">${section.count}</span>',
+              "render semantic section count",
+          )
+          build_path.write_text(build)
+
+          test_path = Path("scripts/build-docs-site.test.js")
+          tests = test_path.read_text()
+          tests = replace_once(
+              tests,
+              '''const providerIndexFile = path.join(siteDir, "providers", "index.html");
+          const generatedTest = fs.existsSync(providerIndexFile) ? test : test.skip;''',
+              '''const providerIndexFile = path.join(siteDir, "providers", "index.html");
+          const providerMetadata = JSON.parse(
+            fs.readFileSync(path.join(providersDir, "provider-metadata.json"), "utf8"),
+          );
+          const providerCount = Object.keys(providerMetadata).length;
+          const generatedTest = fs.existsSync(providerIndexFile) ? test : test.skip;''',
+              "load provider metadata once",
+          )
+          tests = replace_once(
+              tests,
+              'generatedTest("generated navigation includes every provider page exactly once", () => {\n  const html = readGenerated("providers/index.html");\n  const providerNav = navSection(html, "Providers");',
+              'generatedTest("generated navigation links every provider page but does not count the index as a provider", () => {\n  const html = readGenerated("providers/index.html");\n  const home = readGenerated("index.html");\n  const providerNav = navSection(html, "Providers");',
+              "clarify provider navigation regression",
+          )
+          tests = replace_once(
+              tests,
+              '''  assert.match(
+            providerNav,
+            new RegExp(`<span class="nav-count">${providerMarkdown.length}</span>`),
+          );
+          assert.equal(
+            occurrences(providerNav, '<a class="nav-link'),''',
+              '''  assert.match(
+            providerNav,
+            new RegExp(`<span class="nav-count">${providerCount}</span>`),
+          );
+          assert.match(
+            home,
+            new RegExp(`Browse ${providerCount} providers</a>`),
+          );
+          assert.equal(
+            providerMarkdown.length,
+            providerCount + 1,
+            "provider navigation should contain the index plus one page per provider",
+          );
+          assert.equal(
+            occurrences(providerNav, '<a class="nav-link'),''',
+              "assert consistent semantic count",
+          )
+          tests = replace_once(
+              tests,
+              '''  const metadata = JSON.parse(fs.readFileSync(path.join(providersDir, "provider-metadata.json"), "utf8"));
+          const filter = element(html, "div", /class="provider-filter"[^>]*data-provider-filter/);''',
+              '''  const filter = element(html, "div", /class="provider-filter"[^>]*data-provider-filter/);''',
+              "remove duplicate metadata read",
+          )
+          tests = replace_once(
+              tests,
+              'assert.equal(rows.length, Object.keys(metadata).length);',
+              'assert.equal(rows.length, providerCount);',
+              "reuse provider count in matrix assertion",
+          )
+          tests = replace_once(
+              tests,
+              'new Set(Object.keys(metadata)),',
+              'new Set(Object.keys(providerMetadata)),',
+              "reuse provider metadata in row assertion",
+          )
+          test_path.write_text(tests)
+
+      - name: Verify docs build and tests
+        run: scripts/check-docs.sh
+
+      - name: Commit final change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-provider-count-fix.yml
+          git add scripts/build-docs-site.mjs scripts/build-docs-site.test.js
+          git commit -m "fix(docs): count providers without index page"
+          git push origin HEAD:fix/provider-navigation-count
