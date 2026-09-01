@@ -4,13 +4,10 @@
 
 ### Added
 
-<<<<<<< HEAD
 - `crabbox heartbeat` now works for delegated-run providers that advertise the new `lease-heartbeat` feature, instead of failing with `does not support lease heartbeat`. Such a heartbeat reports the idle window the provider reports back, or none at all, and refuses `--idle-timeout` rather than ignoring it.
 - Islo implements `lease-heartbeat` with one no-op exec, which is what registers sandbox activity, since Islo exposes no heartbeat endpoint. It writes no lifecycle policy, so it cannot change a sandbox's absolute deadline, and it warns when the sandbox reports no `lifecycle.pause_after_idle` to defer. A paused sandbox is refused rather than resumed, because an exec would resume it and the resume is billed.
 - Added an Islo idle-pause policy, on by default for every new sandbox at the 30-minute `--idle-timeout` default: it is sent as the sandbox `pause_after_idle` lifecycle field with `auto_resume` pinned to `never`, reused leases are resumed by Crabbox before sync and exec, and a `--reclaim` whose idle timeout differs from the sandbox's immutable policy fails instead of adopting it. Raise `--idle-timeout` for runs longer than it. `--ttl` is not handed to Islo as a deletion deadline; Crabbox remains the only thing that deletes an Islo lease.
-=======
 - Added `providerResourceId` to `crabbox inspect --json` for providers that assign a resource an immutable identifier separate from its name, and populated it for Islo sandboxes.
->>>>>>> fork/feat/islo-authoritative-identity
 
 ### Fixed
 

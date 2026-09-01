@@ -830,17 +830,13 @@ func (b *isloBackend) resolveLeaseIDForRepo(ctx context.Context, client isloAPI,
 	if sandbox == nil || sandbox.GetName() != name {
 		return "", "", "", exit(4, "islo sandbox %q was not found; refusing to create a local claim", name)
 	}
-<<<<<<< HEAD
 	// Islo fixes the lifecycle policy at create time, so adopting a sandbox whose
 	// policy disagrees with this config must fail instead of leaving the caller
 	// with an idle timeout that was never sent for this sandbox.
 	if err := isloLifecycleConflict(name, sandbox, b.cfg); err != nil {
 		return "", "", "", err
 	}
-	if err := claimLeaseForRepoProviderWithPond(leaseID, slug, isloProvider, b.cfg.Pond, repoRoot, b.cfg.IdleTimeout, true); err != nil {
-=======
 	if err := claimLeaseForRepoProviderScopePond(leaseID, slug, isloProvider, b.claimScope(), b.cfg.Pond, repoRoot, b.cfg.IdleTimeout, true); err != nil {
->>>>>>> fork/feat/islo-authoritative-identity
 		return "", "", "", err
 	}
 	if err := bindIsloClaimIdentity(leaseID, isloIdentityFromSandbox(sandbox)); err != nil {

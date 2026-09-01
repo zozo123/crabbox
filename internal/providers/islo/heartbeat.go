@@ -56,7 +56,7 @@ func (b *isloBackend) Heartbeat(ctx context.Context, req core.LeaseHeartbeatRequ
 	if err != nil {
 		return core.LeaseHeartbeatResult{}, err
 	}
-	if err := requireIsloLeaseClaim(leaseID, "heartbeat"); err != nil {
+	if _, err := requireIsloLeaseClaim(leaseID, "heartbeat"); err != nil {
 		return core.LeaseHeartbeatResult{}, err
 	}
 	getCtx, cancelGet := context.WithTimeout(ctx, isloHeartbeatTimeout)
