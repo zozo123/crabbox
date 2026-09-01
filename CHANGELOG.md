@@ -4,9 +4,13 @@
 
 ### Added
 
+<<<<<<< HEAD
 - `crabbox heartbeat` now works for delegated-run providers that advertise the new `lease-heartbeat` feature, instead of failing with `does not support lease heartbeat`. Such a heartbeat reports the idle window the provider reports back, or none at all, and refuses `--idle-timeout` rather than ignoring it.
 - Islo implements `lease-heartbeat` with one no-op exec, which is what registers sandbox activity, since Islo exposes no heartbeat endpoint. It writes no lifecycle policy, so it cannot change a sandbox's absolute deadline, and it warns when the sandbox reports no `lifecycle.pause_after_idle` to defer. A paused sandbox is refused rather than resumed, because an exec would resume it and the resume is billed.
 - Added an Islo idle-pause policy, on by default for every new sandbox at the 30-minute `--idle-timeout` default: it is sent as the sandbox `pause_after_idle` lifecycle field with `auto_resume` pinned to `never`, reused leases are resumed by Crabbox before sync and exec, and a `--reclaim` whose idle timeout differs from the sandbox's immutable policy fails instead of adopting it. Raise `--idle-timeout` for runs longer than it. `--ttl` is not handed to Islo as a deletion deadline; Crabbox remains the only thing that deletes an Islo lease.
+=======
+- Added `providerResourceId` to `crabbox inspect --json` for providers that assign a resource an immutable identifier separate from its name, and populated it for Islo sandboxes.
+>>>>>>> fork/feat/islo-authoritative-identity
 
 ### Fixed
 
@@ -16,6 +20,7 @@
 - Added exact-source abandonment for unresolved ordinary Machine0 checkpoints: dispose of the positively identified source through its existing claim owner while retaining the unknown image obligation and rejecting later fork, prune, or local deletion.
 - Released ordinary Machine0 checkpoint reservations when the provider proves image submission was never attempted, keeping failed captures from blocking source cleanup while retaining interrupted or uncertain submissions.
 - Made explicit coordinator Stop share one five-minute cancellation budget across inspection, claim waits, release, and observation, and made local daemon lock waits honor cancellation without losing confirmed cleanup results.
+- Fixed Islo `stop` and run cleanup to prove a sandbox is deleted before dropping the local lease claim, using the authoritative by-id tombstone or a 404 on the exact sandbox name. An unproven teardown now fails and keeps the claim so `crabbox stop` can retry instead of losing the only handle on a running sandbox; `crabbox inspect` on a lease whose sandbox is gone reports state `deleted` rather than failing.
 - Fixed Parallels clone destinations to pass the configured parent directory to `prlctl --dst`, letting Parallels name and create the VM bundle beneath it.
 - Preserved exclusive ready-pool lease ownership across typed and legacy pools, including existing duplicate records, and prevented expired or quarantined borrows from becoming ready through return or re-registration.
 - Reduced SSH startup round trips by checking readiness before transport diagnosis and skipping unused run telemetry when no coordinator run handle exists.
