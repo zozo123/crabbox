@@ -1,0 +1,2783 @@
+{
+  "subject": "Docs browser proof",
+  "source": {
+    "commit": "16ea048cbd8e570c461f48a2a8ea61ecdd468862",
+    "workflowCommit": null,
+    "ref": null,
+    "event": null,
+    "runId": null
+  },
+  "url": "http://127.0.0.1:4173/features/",
+  "homeUrl": "http://127.0.0.1:4173/",
+  "siteDir": "dist/docs-site",
+  "outDir": "dist/ui-proof",
+  "screenshots": [
+    {
+      "file": "features-desktop-light.png",
+      "sha256": "efe21187a5cf394c25623ddab8d7a9eca2fa5814c3bf93c7c9fcae9c6d8da431",
+      "bytes": 1906609,
+      "width": 1440,
+      "height": 5709
+    },
+    {
+      "file": "features-search-desktop.png",
+      "sha256": "3cb8c85b2f7a4316c6242ae76f864849279bed3413aee60aeb4edde77e303ffe",
+      "bytes": 636076,
+      "width": 1440,
+      "height": 2668
+    },
+    {
+      "file": "features-filter-desktop.png",
+      "sha256": "128a1a6d807693f69cfca677a8060992dcb70cc82e07cdabf50dc3b64c862c10",
+      "bytes": 938630,
+      "width": 1440,
+      "height": 3109
+    },
+    {
+      "file": "features-empty-desktop.png",
+      "sha256": "58b4c98deec386f905e428eb76041dfd1fc9a0eadda175131b94edd88d7b0978",
+      "bytes": 444258,
+      "width": 1440,
+      "height": 1814
+    },
+    {
+      "file": "home-desktop-light.png",
+      "sha256": "df302058e0d57e26d36426fe355cca4ea62d3b5b43094db9be6cc6f75621c32e",
+      "bytes": 745076,
+      "width": 1440,
+      "height": 3915
+    },
+    {
+      "file": "skills-desktop.png",
+      "sha256": "481eb099dc7b1303488a62568efb32cd6b20666b1e6d0c4230cf1ab7a0e866e4",
+      "bytes": 289100,
+      "width": 1440,
+      "height": 1100
+    },
+    {
+      "file": "features-desktop-dark.png",
+      "sha256": "d26c01fec6910a2f6d64f4369a87b2aa6049367a8b92559903b246a88becdfd8",
+      "bytes": 1848118,
+      "width": 1440,
+      "height": 5709
+    },
+    {
+      "file": "home-desktop-dark.png",
+      "sha256": "188add9e0372f47c74c2d789d27454ad4aee6b19f96533a230a3cf4ef30d485d",
+      "bytes": 737597,
+      "width": 1440,
+      "height": 3915
+    },
+    {
+      "file": "features-mobile.png",
+      "sha256": "a312cfceaff01154bb5b3a91868d46d4947458249e8fbbbfeb18aaaeb6a42677",
+      "bytes": 1938399,
+      "width": 390,
+      "height": 10977
+    },
+    {
+      "file": "home-mobile.png",
+      "sha256": "25b096512a038569d9b402737851aab600f4a41d8c722690eadec39cc138d2cd",
+      "bytes": 611128,
+      "width": 390,
+      "height": 6265
+    },
+    {
+      "file": "skills-mobile.png",
+      "sha256": "d8f9c6ca4502e613be96d0b37622b1c0116c832249b363e2ecf469b08e443d6c",
+      "bytes": 92819,
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "assertions": [
+    {
+      "label": "hero headline renders",
+      "ok": true,
+      "details": {
+        "selector": ".fx-hero h1"
+      }
+    },
+    {
+      "label": "hero headline copy is intact",
+      "ok": true,
+      "details": {
+        "selector": ".fx-hero h1",
+        "text": "Build locally.Run remotely.Prove every result."
+      }
+    },
+    {
+      "label": "feature explorer result region renders",
+      "ok": true,
+      "details": {
+        "selector": "[data-feature-explorer]"
+      }
+    },
+    {
+      "label": "feature explorer controls render",
+      "ok": true,
+      "details": {
+        "selector": "[data-fx-filter-bar]"
+      }
+    },
+    {
+      "label": "feature explorer exposes the generated capability cards",
+      "ok": true,
+      "details": {
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "feature explorer exposes capability area sections",
+      "ok": true,
+      "details": {
+        "sections": [
+          "foundations",
+          "fleet-control-and-coordination",
+          "runners-and-reachability",
+          "sync-execution-and-evidence",
+          "integrations"
+        ]
+      }
+    },
+    {
+      "label": "initial explorer state shows every card",
+      "ok": true,
+      "details": {
+        "visibleCards": 45,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "initial count matches generated card count",
+      "ok": true,
+      "details": {
+        "countText": "45 capabilities",
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "initial filter pressed state is all only",
+      "ok": true,
+      "details": {
+        "filters": [
+          {
+            "area": "all",
+            "label": "All capabilities",
+            "pressed": "true"
+          },
+          {
+            "area": "foundations",
+            "label": "Foundations",
+            "pressed": "false"
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "label": "Fleet control and coordination",
+            "pressed": "false"
+          },
+          {
+            "area": "runners-and-reachability",
+            "label": "Runners and reachability",
+            "pressed": "false"
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "label": "Sync, execution, and evidence",
+            "pressed": "false"
+          },
+          {
+            "area": "integrations",
+            "label": "Integrations",
+            "pressed": "false"
+          }
+        ]
+      }
+    },
+    {
+      "label": "provider reference handoff is visible",
+      "ok": true,
+      "details": {
+        "selector": ".fx-boundary aside a[href='../providers/index.html']"
+      }
+    },
+    {
+      "label": "provider handoff label is visible",
+      "ok": true,
+      "details": {
+        "selector": ".fx-boundary aside a[href='../providers/index.html']",
+        "text": "◫Need a target?Choose a providerCompare clouds, sandboxes, CI services, and self-hosted capacity.→"
+      }
+    },
+    {
+      "label": "command reference handoff is visible",
+      "ok": true,
+      "details": {
+        "selector": ".fx-boundary aside a[href='../commands/index.html']"
+      }
+    },
+    {
+      "label": "command handoff label is visible",
+      "ok": true,
+      "details": {
+        "selector": ".fx-boundary aside a[href='../commands/index.html']",
+        "text": "›_Need exact syntax?Open command referenceFind flags, arguments, examples, and command-specific behavior.→"
+      }
+    },
+    {
+      "label": "handoff renders exactly the provider and command cards",
+      "ok": true,
+      "details": {
+        "labels": [
+          "Choose a provider",
+          "Open command reference"
+        ]
+      }
+    },
+    {
+      "label": "handoff card labels identify provider and command references",
+      "ok": true,
+      "details": {
+        "labels": [
+          "Choose a provider",
+          "Open command reference"
+        ]
+      }
+    },
+    {
+      "label": "handoff cards keep readable text columns",
+      "ok": true,
+      "details": {
+        "layout": [
+          {
+            "href": "../providers/index.html",
+            "label": "Choose a provider",
+            "body": "Compare clouds, sandboxes, CI services, and self-hosted capacity.",
+            "visible": true,
+            "cardWidth": 493,
+            "cardHeight": 117,
+            "textWidth": 373,
+            "textHeight": 81,
+            "noHorizontalOverflow": true,
+            "iconBeforeText": true,
+            "arrowAfterText": true
+          },
+          {
+            "href": "../commands/index.html",
+            "label": "Open command reference",
+            "body": "Find flags, arguments, examples, and command-specific behavior.",
+            "visible": true,
+            "cardWidth": 493,
+            "cardHeight": 117,
+            "textWidth": 373,
+            "textHeight": 81,
+            "noHorizontalOverflow": true,
+            "iconBeforeText": true,
+            "arrowAfterText": true
+          }
+        ]
+      }
+    },
+    {
+      "label": "handoff card text does not horizontally overflow",
+      "ok": true,
+      "details": {
+        "layout": [
+          {
+            "href": "../providers/index.html",
+            "label": "Choose a provider",
+            "body": "Compare clouds, sandboxes, CI services, and self-hosted capacity.",
+            "visible": true,
+            "cardWidth": 493,
+            "cardHeight": 117,
+            "textWidth": 373,
+            "textHeight": 81,
+            "noHorizontalOverflow": true,
+            "iconBeforeText": true,
+            "arrowAfterText": true
+          },
+          {
+            "href": "../commands/index.html",
+            "label": "Open command reference",
+            "body": "Find flags, arguments, examples, and command-specific behavior.",
+            "visible": true,
+            "cardWidth": 493,
+            "cardHeight": 117,
+            "textWidth": 373,
+            "textHeight": 81,
+            "noHorizontalOverflow": true,
+            "iconBeforeText": true,
+            "arrowAfterText": true
+          }
+        ]
+      }
+    },
+    {
+      "label": "handoff card icon, text, and arrow stay in order",
+      "ok": true,
+      "details": {
+        "layout": [
+          {
+            "href": "../providers/index.html",
+            "label": "Choose a provider",
+            "body": "Compare clouds, sandboxes, CI services, and self-hosted capacity.",
+            "visible": true,
+            "cardWidth": 493,
+            "cardHeight": 117,
+            "textWidth": 373,
+            "textHeight": 81,
+            "noHorizontalOverflow": true,
+            "iconBeforeText": true,
+            "arrowAfterText": true
+          },
+          {
+            "href": "../commands/index.html",
+            "label": "Open command reference",
+            "body": "Find flags, arguments, examples, and command-specific behavior.",
+            "visible": true,
+            "cardWidth": 493,
+            "cardHeight": 117,
+            "textWidth": 373,
+            "textHeight": 81,
+            "noHorizontalOverflow": true,
+            "iconBeforeText": true,
+            "arrowAfterText": true
+          }
+        ]
+      }
+    },
+    {
+      "label": "screenshot captured: features-desktop-light.png",
+      "ok": true,
+      "details": {
+        "file": "features-desktop-light.png",
+        "sha256": "efe21187a5cf394c25623ddab8d7a9eca2fa5814c3bf93c7c9fcae9c6d8da431",
+        "bytes": 1906609,
+        "width": 1440,
+        "height": 5709
+      }
+    },
+    {
+      "label": "slash focuses feature search",
+      "ok": true,
+      "details": {
+        "activeElement": "fx-search"
+      }
+    },
+    {
+      "label": "desktop search has generated matching cards",
+      "ok": true,
+      "details": {
+        "query": "desktop"
+      }
+    },
+    {
+      "label": "search result count matches matching cards",
+      "ok": true,
+      "details": {
+        "visibleCards": 5,
+        "expectedCards": 5
+      }
+    },
+    {
+      "label": "search narrows visible cards",
+      "ok": true,
+      "details": {
+        "visibleCards": 5,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "search leaves only cards matching the query visible",
+      "ok": true,
+      "details": {
+        "query": "desktop",
+        "visibleTitles": [
+          "Lease capabilities",
+          "Interactive desktop and VNC",
+          "Linux VNC",
+          "Windows VNC",
+          "macOS VNC"
+        ]
+      }
+    },
+    {
+      "label": "search updates the capability count",
+      "ok": true,
+      "details": {
+        "countText": "5 capabilities",
+        "visibleCards": 5
+      }
+    },
+    {
+      "label": "search exposes the clear control",
+      "ok": true,
+      "details": {
+        "clearVisible": true
+      }
+    },
+    {
+      "label": "search query is reflected in the URL",
+      "ok": true,
+      "details": {
+        "urlSearch": "?q=desktop"
+      }
+    },
+    {
+      "label": "screenshot captured: features-search-desktop.png",
+      "ok": true,
+      "details": {
+        "file": "features-search-desktop.png",
+        "sha256": "3cb8c85b2f7a4316c6242ae76f864849279bed3413aee60aeb4edde77e303ffe",
+        "bytes": 636076,
+        "width": 1440,
+        "height": 2668
+      }
+    },
+    {
+      "label": "filter button has exclusive pressed state",
+      "ok": true,
+      "details": {
+        "filters": [
+          {
+            "area": "all",
+            "label": "All capabilities",
+            "pressed": "false"
+          },
+          {
+            "area": "foundations",
+            "label": "Foundations",
+            "pressed": "false"
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "label": "Fleet control and coordination",
+            "pressed": "false"
+          },
+          {
+            "area": "runners-and-reachability",
+            "label": "Runners and reachability",
+            "pressed": "false"
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "label": "Sync, execution, and evidence",
+            "pressed": "true"
+          },
+          {
+            "area": "integrations",
+            "label": "Integrations",
+            "pressed": "false"
+          }
+        ]
+      }
+    },
+    {
+      "label": "filter hides cards from other capability areas",
+      "ok": true,
+      "details": {
+        "visibleCards": [
+          "sync-execution-and-evidence:Sync",
+          "sync-execution-and-evidence:Jobs",
+          "sync-execution-and-evidence:Hermetic agent evidence",
+          "sync-execution-and-evidence:Deterministic perf evidence",
+          "sync-execution-and-evidence:Actions hydration",
+          "sync-execution-and-evidence:Capsules",
+          "sync-execution-and-evidence:Checkpoints",
+          "sync-execution-and-evidence:Editor handoff",
+          "sync-execution-and-evidence:Interactive desktop and VNC",
+          "sync-execution-and-evidence:Artifacts",
+          "sync-execution-and-evidence:Linux VNC",
+          "sync-execution-and-evidence:Windows VNC",
+          "sync-execution-and-evidence:macOS VNC",
+          "sync-execution-and-evidence:Test results",
+          "sync-execution-and-evidence:Cache controls",
+          "sync-execution-and-evidence:Cache volumes"
+        ],
+        "selectedAreaCards": 16
+      }
+    },
+    {
+      "label": "filter hides non-selected capability sections",
+      "ok": true,
+      "details": {
+        "sections": [
+          {
+            "area": "foundations",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "runners-and-reachability",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "hidden": false,
+            "visibleCards": 16
+          },
+          {
+            "area": "integrations",
+            "hidden": true,
+            "visibleCards": 0
+          }
+        ]
+      }
+    },
+    {
+      "label": "filter count matches selected area",
+      "ok": true,
+      "details": {
+        "countText": "16 capabilities",
+        "selectedAreaCards": 16
+      }
+    },
+    {
+      "label": "selected filter is reflected in the URL",
+      "ok": true,
+      "details": {
+        "urlSearch": "?area=sync-execution-and-evidence"
+      }
+    },
+    {
+      "label": "screenshot captured: features-filter-desktop.png",
+      "ok": true,
+      "details": {
+        "file": "features-filter-desktop.png",
+        "sha256": "128a1a6d807693f69cfca677a8060992dcb70cc82e07cdabf50dc3b64c862c10",
+        "bytes": 938630,
+        "width": 1440,
+        "height": 3109
+      }
+    },
+    {
+      "label": "deep link restores feature search query",
+      "ok": true,
+      "details": {
+        "searchValue": "evidence"
+      }
+    },
+    {
+      "label": "deep link restores selected feature area",
+      "ok": true,
+      "details": {
+        "filters": [
+          {
+            "area": "all",
+            "label": "All capabilities",
+            "pressed": "false"
+          },
+          {
+            "area": "foundations",
+            "label": "Foundations",
+            "pressed": "false"
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "label": "Fleet control and coordination",
+            "pressed": "false"
+          },
+          {
+            "area": "runners-and-reachability",
+            "label": "Runners and reachability",
+            "pressed": "false"
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "label": "Sync, execution, and evidence",
+            "pressed": "true"
+          },
+          {
+            "area": "integrations",
+            "label": "Integrations",
+            "pressed": "false"
+          }
+        ]
+      }
+    },
+    {
+      "label": "deep link applies search and area filters together",
+      "ok": true,
+      "details": {
+        "visibleCards": [
+          "sync-execution-and-evidence:Hermetic agent evidence",
+          "sync-execution-and-evidence:Deterministic perf evidence"
+        ]
+      }
+    },
+    {
+      "label": "Escape proof starts from a narrowed search",
+      "ok": true,
+      "details": {
+        "query": "cache",
+        "visibleCards": 3,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "Escape clears active search text",
+      "ok": true,
+      "details": {
+        "searchValue": ""
+      }
+    },
+    {
+      "label": "Escape restores all capability cards",
+      "ok": true,
+      "details": {
+        "visibleCards": 45,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "Escape restores the full capability count",
+      "ok": true,
+      "details": {
+        "countText": "45 capabilities",
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "Escape hides the clear control",
+      "ok": true,
+      "details": {
+        "clearVisible": false
+      }
+    },
+    {
+      "label": "Escape removes search query from the URL",
+      "ok": true,
+      "details": {
+        "urlSearch": ""
+      }
+    },
+    {
+      "label": "empty search hides every card",
+      "ok": true,
+      "details": {
+        "visibleCards": 0,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "empty search hides every capability section",
+      "ok": true,
+      "details": {
+        "sections": [
+          {
+            "area": "foundations",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "runners-and-reachability",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "hidden": true,
+            "visibleCards": 0
+          },
+          {
+            "area": "integrations",
+            "hidden": true,
+            "visibleCards": 0
+          }
+        ]
+      }
+    },
+    {
+      "label": "empty state appears for no results",
+      "ok": true,
+      "details": {
+        "emptyVisible": true
+      }
+    },
+    {
+      "label": "empty search reports zero capabilities",
+      "ok": true,
+      "details": {
+        "countText": "0 capabilities"
+      }
+    },
+    {
+      "label": "empty search still exposes the clear control",
+      "ok": true,
+      "details": {
+        "clearVisible": true
+      }
+    },
+    {
+      "label": "screenshot captured: features-empty-desktop.png",
+      "ok": true,
+      "details": {
+        "file": "features-empty-desktop.png",
+        "sha256": "58b4c98deec386f905e428eb76041dfd1fc9a0eadda175131b94edd88d7b0978",
+        "bytes": 444258,
+        "width": 1440,
+        "height": 1814
+      }
+    },
+    {
+      "label": "desktop light homepage headline is intact",
+      "ok": true,
+      "details": {
+        "selector": ".hero-home h1",
+        "text": "Run Your Code in the Right Box."
+      }
+    },
+    {
+      "label": "desktop light nested-capability boundary is visible",
+      "ok": true,
+      "details": {
+        "selector": ".home-capability-note"
+      }
+    },
+    {
+      "label": "desktop light homepage has no horizontal overflow",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage exposes six curated job choices",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage provides one route per job",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage exposes exactly one job result",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light selected job controls the visible result",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light job choices meet the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light finder copy control remains discoverable and meets the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light job choices identify their result panels",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage states the recommendation boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage states the nested boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage example names its provider",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light homepage provider count is explicit",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "job finder removes an invalid deep-link route",
+      "ok": true,
+      "details": {
+        "job": null,
+        "checked": "fast-feedback"
+      }
+    },
+    {
+      "label": "invalid job route falls back to the default",
+      "ok": true,
+      "details": {
+        "job": null,
+        "checked": "fast-feedback"
+      }
+    },
+    {
+      "label": "job finder writes shareable URL state",
+      "ok": true,
+      "details": {
+        "job": "gpu",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ],
+        "command": "$crabbox providers recommend gpu$crabbox doctor --provider <name>",
+        "copyText": "crabbox providers recommend gpu"
+      }
+    },
+    {
+      "label": "job finder selects the requested GPU route",
+      "ok": true,
+      "details": {
+        "job": "gpu",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ],
+        "command": "$crabbox providers recommend gpu$crabbox doctor --provider <name>",
+        "copyText": "crabbox providers recommend gpu"
+      }
+    },
+    {
+      "label": "job finder shows only the GPU result",
+      "ok": true,
+      "details": {
+        "job": "gpu",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ],
+        "command": "$crabbox providers recommend gpu$crabbox doctor --provider <name>",
+        "copyText": "crabbox providers recommend gpu"
+      }
+    },
+    {
+      "label": "GPU route exposes the canonical recommendation",
+      "ok": true,
+      "details": {
+        "job": "gpu",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ],
+        "command": "$crabbox providers recommend gpu$crabbox doctor --provider <name>",
+        "copyText": "crabbox providers recommend gpu"
+      }
+    },
+    {
+      "label": "GPU route copies only the runnable recommendation",
+      "ok": true,
+      "details": {
+        "job": "gpu",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ],
+        "command": "$crabbox providers recommend gpu$crabbox doctor --provider <name>",
+        "copyText": "crabbox providers recommend gpu"
+      }
+    },
+    {
+      "label": "finder clipboard contains the exact runnable recommendation",
+      "ok": true,
+      "details": {
+        "copiedCommand": "crabbox providers recommend gpu"
+      }
+    },
+    {
+      "label": "job finder restores a deep-linked route",
+      "ok": true,
+      "details": {
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "deep-linked route restores the matching result",
+      "ok": true,
+      "details": {
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "native radio keyboard navigation updates the route",
+      "ok": true,
+      "details": {
+        "job": "fanout-testing",
+        "checked": "fanout-testing"
+      }
+    },
+    {
+      "label": "desktop light restored homepage headline is intact",
+      "ok": true,
+      "details": {
+        "selector": ".hero-home h1",
+        "text": "Run Your Code in the Right Box."
+      }
+    },
+    {
+      "label": "desktop light restored nested-capability boundary is visible",
+      "ok": true,
+      "details": {
+        "selector": ".home-capability-note"
+      }
+    },
+    {
+      "label": "desktop light restored homepage has no horizontal overflow",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage exposes six curated job choices",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage provides one route per job",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage exposes exactly one job result",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored selected job controls the visible result",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored job choices meet the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored finder copy control remains discoverable and meets the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored job choices identify their result panels",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage states the recommendation boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage states the nested boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage example names its provider",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop light restored homepage provider count is explicit",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "screenshot captured: home-desktop-light.png",
+      "ok": true,
+      "details": {
+        "file": "home-desktop-light.png",
+        "sha256": "df302058e0d57e26d36426fe355cca4ea62d3b5b43094db9be6cc6f75621c32e",
+        "bytes": 745076,
+        "width": 1440,
+        "height": 3915
+      }
+    },
+    {
+      "label": "desktop: both skill choices fit the article without horizontal scrolling",
+      "ok": true,
+      "details": {
+        "left": 344,
+        "right": 1138.015625,
+        "items": [
+          {
+            "text": "crabbox (skills/crabbox): run repository commands in sandbox environments, reuse remote machines, and collect execution evidence.",
+            "left": 365.59375,
+            "right": 1138.015625,
+            "width": 772,
+            "scrollWidth": 772
+          },
+          {
+            "text": "crabbox-quickstart (skills/crabbox-quickstart): get from CLI installation to a first disposable local-container run and explicit cleanup.",
+            "left": 365.59375,
+            "right": 1138.015625,
+            "width": 772,
+            "scrollWidth": 772
+          }
+        ]
+      }
+    },
+    {
+      "label": "screenshot captured: skills-desktop.png",
+      "ok": true,
+      "details": {
+        "file": "skills-desktop.png",
+        "sha256": "481eb099dc7b1303488a62568efb32cd6b20666b1e6d0c4230cf1ab7a0e866e4",
+        "bytes": 289100,
+        "width": 1440,
+        "height": 1100
+      }
+    },
+    {
+      "label": "desktop: both installable skills are discoverable",
+      "ok": true
+    },
+    {
+      "label": "desktop: crabbox download matches its discovery digest",
+      "ok": true
+    },
+    {
+      "label": "desktop: crabbox-quickstart download matches its discovery digest",
+      "ok": true
+    },
+    {
+      "label": "desktop light page has no JavaScript console errors",
+      "ok": true,
+      "details": {
+        "errors": []
+      }
+    },
+    {
+      "label": "dark color scheme applies to the page",
+      "ok": true,
+      "details": {
+        "expected": "dark",
+        "actual": "dark"
+      }
+    },
+    {
+      "label": "hero headline renders",
+      "ok": true,
+      "details": {
+        "selector": ".fx-hero h1"
+      }
+    },
+    {
+      "label": "hero headline copy is intact",
+      "ok": true,
+      "details": {
+        "selector": ".fx-hero h1",
+        "text": "Build locally.Run remotely.Prove every result."
+      }
+    },
+    {
+      "label": "feature explorer result region renders",
+      "ok": true,
+      "details": {
+        "selector": "[data-feature-explorer]"
+      }
+    },
+    {
+      "label": "feature explorer controls render",
+      "ok": true,
+      "details": {
+        "selector": "[data-fx-filter-bar]"
+      }
+    },
+    {
+      "label": "feature explorer exposes the generated capability cards",
+      "ok": true,
+      "details": {
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "feature explorer exposes capability area sections",
+      "ok": true,
+      "details": {
+        "sections": [
+          "foundations",
+          "fleet-control-and-coordination",
+          "runners-and-reachability",
+          "sync-execution-and-evidence",
+          "integrations"
+        ]
+      }
+    },
+    {
+      "label": "initial explorer state shows every card",
+      "ok": true,
+      "details": {
+        "visibleCards": 45,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "initial count matches generated card count",
+      "ok": true,
+      "details": {
+        "countText": "45 capabilities",
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "initial filter pressed state is all only",
+      "ok": true,
+      "details": {
+        "filters": [
+          {
+            "area": "all",
+            "label": "All capabilities",
+            "pressed": "true"
+          },
+          {
+            "area": "foundations",
+            "label": "Foundations",
+            "pressed": "false"
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "label": "Fleet control and coordination",
+            "pressed": "false"
+          },
+          {
+            "area": "runners-and-reachability",
+            "label": "Runners and reachability",
+            "pressed": "false"
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "label": "Sync, execution, and evidence",
+            "pressed": "false"
+          },
+          {
+            "area": "integrations",
+            "label": "Integrations",
+            "pressed": "false"
+          }
+        ]
+      }
+    },
+    {
+      "label": "screenshot captured: features-desktop-dark.png",
+      "ok": true,
+      "details": {
+        "file": "features-desktop-dark.png",
+        "sha256": "d26c01fec6910a2f6d64f4369a87b2aa6049367a8b92559903b246a88becdfd8",
+        "bytes": 1848118,
+        "width": 1440,
+        "height": 5709
+      }
+    },
+    {
+      "label": "dark color scheme applies to the page",
+      "ok": true,
+      "details": {
+        "expected": "dark",
+        "actual": "dark"
+      }
+    },
+    {
+      "label": "desktop dark homepage headline is intact",
+      "ok": true,
+      "details": {
+        "selector": ".hero-home h1",
+        "text": "Run Your Code in the Right Box."
+      }
+    },
+    {
+      "label": "desktop dark nested-capability boundary is visible",
+      "ok": true,
+      "details": {
+        "selector": ".home-capability-note"
+      }
+    },
+    {
+      "label": "desktop dark homepage has no horizontal overflow",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage exposes six curated job choices",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage provides one route per job",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage exposes exactly one job result",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark selected job controls the visible result",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark job choices meet the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark finder copy control remains discoverable and meets the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark job choices identify their result panels",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage states the recommendation boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage states the nested boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage example names its provider",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "desktop dark homepage provider count is explicit",
+      "ok": true,
+      "details": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "screenshot captured: home-desktop-dark.png",
+      "ok": true,
+      "details": {
+        "file": "home-desktop-dark.png",
+        "sha256": "188add9e0372f47c74c2d789d27454ad4aee6b19f96533a230a3cf4ef30d485d",
+        "bytes": 737597,
+        "width": 1440,
+        "height": 3915
+      }
+    },
+    {
+      "label": "desktop dark page has no JavaScript console errors",
+      "ok": true,
+      "details": {
+        "errors": []
+      }
+    },
+    {
+      "label": "light color scheme applies to the page",
+      "ok": true,
+      "details": {
+        "expected": "light",
+        "actual": "light"
+      }
+    },
+    {
+      "label": "hero headline renders",
+      "ok": true,
+      "details": {
+        "selector": ".fx-hero h1"
+      }
+    },
+    {
+      "label": "hero headline copy is intact",
+      "ok": true,
+      "details": {
+        "selector": ".fx-hero h1",
+        "text": "Build locally.Run remotely.Prove every result."
+      }
+    },
+    {
+      "label": "feature explorer result region renders",
+      "ok": true,
+      "details": {
+        "selector": "[data-feature-explorer]"
+      }
+    },
+    {
+      "label": "feature explorer controls render",
+      "ok": true,
+      "details": {
+        "selector": "[data-fx-filter-bar]"
+      }
+    },
+    {
+      "label": "feature explorer exposes the generated capability cards",
+      "ok": true,
+      "details": {
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "feature explorer exposes capability area sections",
+      "ok": true,
+      "details": {
+        "sections": [
+          "foundations",
+          "fleet-control-and-coordination",
+          "runners-and-reachability",
+          "sync-execution-and-evidence",
+          "integrations"
+        ]
+      }
+    },
+    {
+      "label": "initial explorer state shows every card",
+      "ok": true,
+      "details": {
+        "visibleCards": 45,
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "initial count matches generated card count",
+      "ok": true,
+      "details": {
+        "countText": "45 capabilities",
+        "totalCards": 45
+      }
+    },
+    {
+      "label": "initial filter pressed state is all only",
+      "ok": true,
+      "details": {
+        "filters": [
+          {
+            "area": "all",
+            "label": "All capabilities",
+            "pressed": "true"
+          },
+          {
+            "area": "foundations",
+            "label": "Foundations",
+            "pressed": "false"
+          },
+          {
+            "area": "fleet-control-and-coordination",
+            "label": "Fleet control and coordination",
+            "pressed": "false"
+          },
+          {
+            "area": "runners-and-reachability",
+            "label": "Runners and reachability",
+            "pressed": "false"
+          },
+          {
+            "area": "sync-execution-and-evidence",
+            "label": "Sync, execution, and evidence",
+            "pressed": "false"
+          },
+          {
+            "area": "integrations",
+            "label": "Integrations",
+            "pressed": "false"
+          }
+        ]
+      }
+    },
+    {
+      "label": "mobile layout has no horizontal overflow",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "filterPosition": "static",
+        "gridColumns": "358px",
+        "boundaryCards": [
+          {
+            "label": "Choose a provider",
+            "cardWidth": 358,
+            "textWidth": 238
+          },
+          {
+            "label": "Open command reference",
+            "cardWidth": 358,
+            "textWidth": 238
+          }
+        ]
+      }
+    },
+    {
+      "label": "mobile filter is not sticky over content",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "filterPosition": "static",
+        "gridColumns": "358px",
+        "boundaryCards": [
+          {
+            "label": "Choose a provider",
+            "cardWidth": 358,
+            "textWidth": 238
+          },
+          {
+            "label": "Open command reference",
+            "cardWidth": 358,
+            "textWidth": 238
+          }
+        ]
+      }
+    },
+    {
+      "label": "mobile handoff cards remain readable",
+      "ok": true,
+      "details": {
+        "boundaryCards": [
+          {
+            "label": "Choose a provider",
+            "cardWidth": 358,
+            "textWidth": 238
+          },
+          {
+            "label": "Open command reference",
+            "cardWidth": 358,
+            "textWidth": 238
+          }
+        ]
+      }
+    },
+    {
+      "label": "screenshot captured: features-mobile.png",
+      "ok": true,
+      "details": {
+        "file": "features-mobile.png",
+        "sha256": "a312cfceaff01154bb5b3a91868d46d4947458249e8fbbbfeb18aaaeb6a42677",
+        "bytes": 1938399,
+        "width": 390,
+        "height": 10977
+      }
+    },
+    {
+      "label": "light color scheme applies to the page",
+      "ok": true,
+      "details": {
+        "expected": "light",
+        "actual": "light"
+      }
+    },
+    {
+      "label": "mobile light homepage headline is intact",
+      "ok": true,
+      "details": {
+        "selector": ".hero-home h1",
+        "text": "Run Your Code in the Right Box."
+      }
+    },
+    {
+      "label": "mobile light nested-capability boundary is visible",
+      "ok": true,
+      "details": {
+        "selector": ".home-capability-note"
+      }
+    },
+    {
+      "label": "mobile light homepage has no horizontal overflow",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage exposes six curated job choices",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage provides one route per job",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage exposes exactly one job result",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light selected job controls the visible result",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light job choices meet the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light finder copy control remains discoverable and meets the minimum touch target",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light job choices identify their result panels",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage states the recommendation boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage states the nested boundary",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage example names its provider",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "mobile light homepage provider count is explicit",
+      "ok": true,
+      "details": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    {
+      "label": "screenshot captured: home-mobile.png",
+      "ok": true,
+      "details": {
+        "file": "home-mobile.png",
+        "sha256": "25b096512a038569d9b402737851aab600f4a41d8c722690eadec39cc138d2cd",
+        "bytes": 611128,
+        "width": 390,
+        "height": 6265
+      }
+    },
+    {
+      "label": "mobile: both skill choices fit the article without horizontal scrolling",
+      "ok": true,
+      "details": {
+        "left": 16,
+        "right": 374,
+        "items": [
+          {
+            "text": "crabbox (skills/crabbox): run repository commands in sandbox environments, reuse remote machines, and collect execution evidence.",
+            "left": 37.59375,
+            "right": 374,
+            "width": 336,
+            "scrollWidth": 336
+          },
+          {
+            "text": "crabbox-quickstart (skills/crabbox-quickstart): get from CLI installation to a first disposable local-container run and explicit cleanup.",
+            "left": 37.59375,
+            "right": 374,
+            "width": 336,
+            "scrollWidth": 336
+          }
+        ]
+      }
+    },
+    {
+      "label": "screenshot captured: skills-mobile.png",
+      "ok": true,
+      "details": {
+        "file": "skills-mobile.png",
+        "sha256": "d8f9c6ca4502e613be96d0b37622b1c0116c832249b363e2ecf469b08e443d6c",
+        "bytes": 92819,
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "label": "mobile: both installable skills are discoverable",
+      "ok": true
+    },
+    {
+      "label": "mobile: crabbox download matches its discovery digest",
+      "ok": true
+    },
+    {
+      "label": "mobile: crabbox-quickstart download matches its discovery digest",
+      "ok": true
+    },
+    {
+      "label": "mobile light page has no JavaScript console errors",
+      "ok": true,
+      "details": {
+        "errors": []
+      }
+    },
+    {
+      "label": "direct file preview search remains interactive",
+      "ok": true,
+      "details": {
+        "visibleCards": 5
+      }
+    },
+    {
+      "label": "direct file preview avoids unsupported History API writes",
+      "ok": true,
+      "details": {
+        "url": "file:///workspace/scratch/c69f855d56ad/crabbox/dist/docs-site/features/index.html"
+      }
+    },
+    {
+      "label": "direct file preview job finder remains interactive",
+      "ok": true,
+      "details": {
+        "url": "file:///workspace/scratch/c69f855d56ad/crabbox/dist/docs-site/index.html",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "direct file preview updates the job result",
+      "ok": true,
+      "details": {
+        "url": "file:///workspace/scratch/c69f855d56ad/crabbox/dist/docs-site/index.html",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "direct file preview job finder avoids unsupported History API writes",
+      "ok": true,
+      "details": {
+        "url": "file:///workspace/scratch/c69f855d56ad/crabbox/dist/docs-site/index.html",
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "direct file preview page has no JavaScript console errors",
+      "ok": true,
+      "details": {
+        "errors": []
+      }
+    },
+    {
+      "label": "no-script job finder selects a route with native controls",
+      "ok": true,
+      "details": {
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "no-script job finder shows the selected result",
+      "ok": true,
+      "details": {
+        "checked": "gpu",
+        "visible": [
+          "gpu"
+        ]
+      }
+    },
+    {
+      "label": "no-script job finder supports native keyboard navigation",
+      "ok": true,
+      "details": {
+        "checked": "fanout-testing",
+        "visible": [
+          "fanout-testing"
+        ]
+      }
+    },
+    {
+      "label": "no-script keyboard navigation updates the result",
+      "ok": true,
+      "details": {
+        "checked": "fanout-testing",
+        "visible": [
+          "fanout-testing"
+        ]
+      }
+    }
+  ],
+  "interactions": {
+    "initial": {
+      "totalCards": 45,
+      "totalSections": 5,
+      "countText": "45 capabilities",
+      "pressedFilters": [
+        "all"
+      ]
+    },
+    "handoff": [
+      {
+        "href": "../providers/index.html",
+        "label": "Choose a provider",
+        "body": "Compare clouds, sandboxes, CI services, and self-hosted capacity.",
+        "visible": true,
+        "cardWidth": 493,
+        "cardHeight": 117,
+        "textWidth": 373,
+        "textHeight": 81,
+        "noHorizontalOverflow": true,
+        "iconBeforeText": true,
+        "arrowAfterText": true
+      },
+      {
+        "href": "../commands/index.html",
+        "label": "Open command reference",
+        "body": "Find flags, arguments, examples, and command-specific behavior.",
+        "visible": true,
+        "cardWidth": 493,
+        "cardHeight": 117,
+        "textWidth": 373,
+        "textHeight": 81,
+        "noHorizontalOverflow": true,
+        "iconBeforeText": true,
+        "arrowAfterText": true
+      }
+    ],
+    "search": {
+      "query": "desktop",
+      "visibleCards": 5,
+      "totalCards": 45,
+      "countText": "5 capabilities",
+      "urlSearch": "?q=desktop",
+      "visibleTitles": [
+        "Lease capabilities",
+        "Interactive desktop and VNC",
+        "Linux VNC",
+        "Windows VNC",
+        "macOS VNC"
+      ]
+    },
+    "filter": {
+      "area": "sync-execution-and-evidence",
+      "visibleCards": 16,
+      "selectedAreaCards": 16,
+      "countText": "16 capabilities",
+      "urlSearch": "?area=sync-execution-and-evidence",
+      "pressedFilters": [
+        "sync-execution-and-evidence"
+      ],
+      "hiddenSections": [
+        "foundations",
+        "fleet-control-and-coordination",
+        "runners-and-reachability",
+        "integrations"
+      ]
+    },
+    "deepLink": {
+      "query": "evidence",
+      "area": "sync-execution-and-evidence",
+      "visibleCards": 2,
+      "countText": "2 capabilities",
+      "urlSearch": "?q=evidence&area=sync-execution-and-evidence"
+    },
+    "escape": {
+      "query": "cache",
+      "valueAfterEscape": "",
+      "visibleCards": 45,
+      "totalCards": 45,
+      "countText": "45 capabilities",
+      "clearVisible": false,
+      "urlSearch": ""
+    },
+    "empty": {
+      "query": "zzzz-no-such-capability",
+      "visibleCards": 0,
+      "totalCards": 45,
+      "countText": "0 capabilities",
+      "emptyVisible": true,
+      "clearVisible": true,
+      "hiddenSections": [
+        "foundations",
+        "fleet-control-and-coordination",
+        "runners-and-reachability",
+        "sync-execution-and-evidence",
+        "integrations"
+      ]
+    },
+    "home": {
+      "desktop light": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      },
+      "desktop light restored": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      },
+      "desktop dark": {
+        "innerWidth": 1440,
+        "scrollWidth": 1440,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 111.53125,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      },
+      "mobile light": {
+        "innerWidth": 390,
+        "scrollWidth": 390,
+        "jobChoices": 6,
+        "jobResults": 6,
+        "visibleJobResults": [
+          "fast-feedback"
+        ],
+        "selectedJob": "fast-feedback",
+        "minimumJobChoiceHeight": 76,
+        "visibleFinderCopyButtons": [
+          44
+        ],
+        "controlledJobResults": 6,
+        "finderDisclaimer": "Built-in guidance, not a live provider check. Availability, price, performance, credentials, quota, and security still depend on the provider. Verify readiness with crabbox doctor.",
+        "capabilityText": "Conditional CapabilityNeed WSL2 or KVM? WSL2 works on compatible AWS and Azure Windows targets. Firecracker requires Crabbox to run on a prepared Linux /dev/kvm host. There is no generic nested mode. Read the exact boundaries →",
+        "example": "$ crabbox run --provider local-container -- pnpm test",
+        "registeredProviders": "81 registered providers"
+      }
+    },
+    "mobile": {
+      "innerWidth": 390,
+      "scrollWidth": 390,
+      "filterPosition": "static",
+      "gridColumns": "358px",
+      "boundaryCards": [
+        {
+          "label": "Choose a provider",
+          "cardWidth": 358,
+          "textWidth": 238
+        },
+        {
+          "label": "Open command reference",
+          "cardWidth": 358,
+          "textWidth": 238
+        }
+      ]
+    },
+    "noScriptHome": {
+      "checked": "fanout-testing",
+      "visible": [
+        "fanout-testing"
+      ]
+    }
+  },
+  "assertionSummary": {
+    "total": 169,
+    "passed": 169
+  }
+}
